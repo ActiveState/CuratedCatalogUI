@@ -30,7 +30,7 @@ export function DescriptionCell({ text, packageName, version, allVulns, vulnInde
   }, [open])
 
   const short    = text.length > TRUNCATE ? text.slice(0, TRUNCATE).trimEnd() + '…' : text
-  const hasMore  = text.length > TRUNCATE
+  const hasMore  = text.length > 0
   const current  = allVulns?.[activeIdx]
   const hasMulti = (allVulns?.length ?? 0) > 1
 
