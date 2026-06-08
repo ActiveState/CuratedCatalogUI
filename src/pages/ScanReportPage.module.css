@@ -63,8 +63,8 @@
 .desc    { white-space: nowrap; }
 .muted   { color: var(--text-muted); font-style: italic; }
 
-.statusOk   { display: inline-block; background: var(--status-ok-bg); border: 1px solid var(--status-ok-bd); color: var(--status-ok-tx); font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 4px; }
-.statusVuln { display: inline-block; background: var(--status-vl-bg); border: 1px solid var(--status-vl-bd); color: var(--status-vl-tx); font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 4px; }
+.statusOk   { display: inline-block; background: var(--status-ok-bg); border: 1px solid var(--status-ok-bd); color: var(--status-ok-tx); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.statusVuln { display: inline-block; background: var(--status-vl-bg); border: 1px solid var(--status-vl-bd); color: var(--status-vl-tx); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
 
 .tableScroll { overflow-x: auto; }
 .tableScroll table { table-layout: fixed; width: 100%; }

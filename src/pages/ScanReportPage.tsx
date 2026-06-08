@@ -98,14 +98,14 @@ export function ScanReportPage() {
           <div className={styles.tableScroll}><table>
             <thead>
               <tr>
-                <th style={{ width: 40 }}>#</th>
-                <th style={{ width: 160 }}>Package</th>
-                <th style={{ width: 100 }}>Version</th>
-                <th style={{ width: 90 }}>Status</th>
-                <th style={{ width: 150 }}>Vuln ID</th>
-                <th style={{ width: 150 }}>CVE Aliases</th>
-                <th style={{ width: 110 }}>Fix Version</th>
-                <th>Description</th>
+                <th style={{ width: '3%' }}>#</th>
+                <th style={{ width: '13%' }}>Package</th>
+                <th style={{ width: '8%' }}>Version</th>
+                <th style={{ width: '10%' }}>Status</th>
+                <th style={{ width: '12%' }}>Vuln ID</th>
+                <th style={{ width: '12%' }}>CVE Aliases</th>
+                <th style={{ width: '10%' }}>Fix Version</th>
+                <th style={{ width: '32%' }}>Description</th>
               </tr>
             </thead>
             <tbody>
