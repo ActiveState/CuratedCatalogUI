@@ -96,16 +96,26 @@ export function ScanReportPage() {
           </div>
         ) : (
           <div className={styles.tableScroll}><table>
+            <colgroup>
+              <col className={styles.colIdx} />
+              <col className={styles.colPkg} />
+              <col className={styles.colVer} />
+              <col className={styles.colStatus} />
+              <col className={styles.colVulnId} />
+              <col className={styles.colCve} />
+              <col className={styles.colFix} />
+              <col className={styles.colDesc} />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: 52 }}>#</th>
-                <th style={{ width: '24%' }}>Package</th>
-                <th style={{ width: '11%' }}>Version</th>
-                <th style={{ width: '9%' }}>Status</th>
-                <th style={{ width: '12%' }}>Vuln ID</th>
-                <th style={{ width: '11%' }}>CVE Aliases</th>
-                <th style={{ width: '12%' }}>Fix Version</th>
-                <th style={{ width: '18%' }}>Description</th>
+                <th>#</th>
+                <th>Package</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Vuln ID</th>
+                <th>CVE Aliases</th>
+                <th>Fix Version</th>
+                <th>Description</th>
               </tr>
             </thead>
             <tbody>

@@ -70,6 +70,27 @@
 .tableScroll table { table-layout: fixed; width: 100%; }
 .tableScroll td, .tableScroll th { overflow: hidden; text-overflow: ellipsis; }
 
+/* ── Column widths — desktop (≥1200px) ─────────────────── */
+.colIdx    { width: 52px; }
+.colPkg    { width: 24%; }
+.colVer    { width: 11%; }
+.colStatus { width: 9%;  }
+.colVulnId { width: 12%; }
+.colCve    { width: 11%; }
+.colFix    { width: 12%; }
+.colDesc   { width: 18%; }
+
+/* ── 13" laptop breakpoint (900–1199px) ─────────────────── */
+@media (max-width: 1199px) {
+  .colPkg    { width: 11%; }  /* clips long names — that's fine  */
+  .colVer    { width: 11%; }  /* unchanged, already safe          */
+  .colStatus { width: 13%; }  /* needs more room for "Vulnerable" */
+  .colVulnId { width: 14%; }  /* fits PYSEC-xxx IDs               */
+  .colCve    { width: 15%; }  /* fits CVE-xxxx-xxxxx pill         */
+  .colFix    { width: 15%; }  /* fits "No fix available"          */
+  .colDesc   { width: 21%; }  /* description + button             */
+}
+
 .loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 32px; color: var(--text-secondary); }
 .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
