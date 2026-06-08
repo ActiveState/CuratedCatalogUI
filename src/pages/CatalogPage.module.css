@@ -37,16 +37,16 @@
 /* ── Column widths — desktop (≥1200px) ───────────────── */
 .colIdx      { width: 4%; }
 .colPkg      { width: 22%; }
-.colVersions { width: 48%; }
-.colCve      { width: 13%; }
-.colIndex    { width: 13%; }
+.colVersions { width: 40%; }
+.colCve      { width: 22%; }
+.colIndex    { width: 12%; }
 
 /* ── 13" laptop breakpoint (≤1199px) ─────────────────── */
 @media (max-width: 1199px) {
-  .colPkg      { width: 18%; }
-  .colVersions { width: 44%; }
-  .colCve      { width: 17%; }
-  .colIndex    { width: 17%; }
+  .colPkg      { width: 20%; }
+  .colVersions { width: 36%; }
+  .colCve      { width: 28%; }
+  .colIndex    { width: 12%; }
 }
 
 /* ── Cells ────────────────────────────────────────────── */
@@ -63,9 +63,7 @@
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 12px;
   color: var(--accent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .versions {
@@ -103,6 +101,20 @@
 }
 
 .notScanned { color: var(--text-muted); font-size: 11px; }
+
+.vulnId {
+  display: inline-block;
+  background: var(--cve-bg);
+  border: 1px solid var(--cve-border);
+  color: var(--cve-text);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin: 2px 3px 2px 0;
+  white-space: nowrap;
+}
 
 .indexCell { vertical-align: middle; overflow: hidden; }
 

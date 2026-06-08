@@ -123,7 +123,10 @@ export function CatalogPage() {
                         ? <span className={styles.notScanned}>—</span>
                         : vulnCount === 0
                           ? <span className={styles.clean}>Clean</span>
-                          : <span className={styles.vuln}>{vulnCount} CVE{vulnCount > 1 ? 's' : ''}</span>
+                          : scan!.vulns.map((v, vi) => {
+                              const label = v.cves[0] ?? v.id
+                              return <span key={vi} className={styles.vulnId}>{label}</span>
+                            })
                       }
                     </td>
                     <td className={styles.indexCell}>
