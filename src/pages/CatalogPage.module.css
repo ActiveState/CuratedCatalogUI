@@ -27,28 +27,105 @@
   transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
 }
 
-.search:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-}
-
+.search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
 .search::placeholder { color: var(--text-secondary); }
 
-.idx  { color: var(--text-muted); font-size: 11px; }
+/* ── Table scroll wrapper ─────────────────────────────── */
+.tableScroll { overflow-x: auto; }
+.tableScroll table { table-layout: fixed; width: 100%; }
+
+/* ── Column widths — desktop (≥1200px) ───────────────── */
+.colIdx      { width: 4%; }
+.colPkg      { width: 22%; }
+.colVersions { width: 48%; }
+.colCve      { width: 13%; }
+.colIndex    { width: 13%; }
+
+/* ── 13" laptop breakpoint (≤1199px) ─────────────────── */
+@media (max-width: 1199px) {
+  .colPkg      { width: 18%; }
+  .colVersions { width: 44%; }
+  .colCve      { width: 17%; }
+  .colIndex    { width: 17%; }
+}
+
+/* ── Cells ────────────────────────────────────────────── */
+.idx {
+  color: var(--text-muted);
+  font-size: 11px;
+  padding-left: 16px !important;
+  padding-right: 4px !important;
+  overflow: visible;
+  text-align: left;
+}
 
 .pkgName {
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 12px;
+  color: var(--accent);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.pkgName a { color: var(--accent); }
-.pkgName a:hover { text-decoration: underline; }
+.versions {
+  white-space: normal;
+  line-height: 1.8;
+  vertical-align: middle;
+}
 
 .noVersion { color: var(--text-muted); font-size: 11px; font-style: italic; }
 
+.cveCell { vertical-align: middle; overflow: hidden; }
+
+.clean {
+  display: inline-block;
+  background: var(--status-ok-bg);
+  border: 1px solid var(--status-ok-bd);
+  color: var(--status-ok-tx);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.vuln {
+  display: inline-block;
+  background: var(--status-vl-bg);
+  border: 1px solid var(--status-vl-bd);
+  color: var(--status-vl-tx);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.notScanned { color: var(--text-muted); font-size: 11px; }
+
+.indexCell { vertical-align: middle; overflow: hidden; }
+
+.indexBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--border-strong);
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.indexBtn:hover { background: var(--bg-accent); border-color: var(--accent); }
+
 .arrow { margin-left: 4px; }
 
+/* ── States ───────────────────────────────────────────── */
 .loading {
   display: flex;
   flex-direction: column;
@@ -69,8 +146,4 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.error {
-  padding: 40px 32px;
-  color: var(--status-vl-tx);
-  font-size: 13px;
-}
+.error { padding: 40px 32px; color: var(--status-vl-tx); font-size: 13px; }

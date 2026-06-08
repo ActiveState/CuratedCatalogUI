@@ -1,26 +1,34 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import { VersionPill } from '../components/VersionPill'
 import styles from './CatalogPage.module.css'
 
-type SortCol = 'name' | 'count'
+type SortCol = 'name' | 'cve'
 
 export function CatalogPage() {
-  const { packages, generated, loading, error } = useData()
-  const [query, setQuery] = useState('')
+  const { packages, scanned, generated, indexUrl, loading, error } = useData()
+  const [query, setQuery]     = useState('')
   const [sortCol, setSortCol] = useState<SortCol>('name')
   const [sortDir, setSortDir] = useState<1 | -1>(1)
+
+  const scanMap = useMemo(() => {
+    const m = new Map(scanned.map(p => [p.name, p]))
+    return m
+  }, [scanned])
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
     let res = q ? packages.filter(p => p.name.toLowerCase().includes(q)) : packages
     return [...res].sort((a, b) => {
-      const av = sortCol === 'name' ? a.name.toLowerCase() : a.versions.length
-      const bv = sortCol === 'name' ? b.name.toLowerCase() : b.versions.length
-      return av < bv ? -sortDir : av > bv ? sortDir : 0
+      if (sortCol === 'cve') {
+        const av = scanMap.get(a.name)?.vulns.length ?? -1
+        const bv = scanMap.get(b.name)?.vulns.length ?? -1
+        if (av !== bv) return bv > av ? sortDir : -sortDir
+      }
+      const an = a.name.toLowerCase(), bn = b.name.toLowerCase()
+      return an < bn ? -sortDir : an > bn ? sortDir : 0
     })
-  }, [packages, query, sortCol, sortDir])
+  }, [packages, query, sortCol, sortDir, scanMap])
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => (d === 1 ? -1 : 1))
@@ -72,39 +80,69 @@ export function CatalogPage() {
             <p>Try a different search term.</p>
           </div>
         ) : (
-          <table>
+          <div className={styles.tableScroll}><table>
+            <colgroup>
+              <col className={styles.colIdx} />
+              <col className={styles.colPkg} />
+              <col className={styles.colVersions} />
+              <col className={styles.colCve} />
+              <col className={styles.colIndex} />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: 48 }}>#</th>
+                <th>#</th>
                 <th className={`sortable${sortCol === 'name' ? ' sorted' : ''}`} onClick={() => handleSort('name')}>
                   Package {arrow('name')}
                 </th>
-                <th className={`sortable${sortCol === 'count' ? ' sorted' : ''}`} onClick={() => handleSort('count')} style={{ width: 80, textAlign: 'center' }}>
-                  Count {arrow('count')}
-                </th>
                 <th>Versions</th>
+                <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''}`} onClick={() => handleSort('cve')}>
+                  CVE Status {arrow('cve')}
+                </th>
+                <th>Index</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((pkg, i) => (
-                <tr key={pkg.name}>
-                  <td className={styles.idx}>{i + 1}</td>
-                  <td className={styles.pkgName}>
-                    <Link to={`/package/${encodeURIComponent(pkg.name)}`}>{pkg.name}</Link>
-                  </td>
-                  <td className={styles.idx} style={{ textAlign: 'center' }}>{pkg.versions.length}</td>
-                  <td>
-                    {pkg.versions.length === 0
-                      ? <span className={styles.noVersion}>—</span>
-                      : pkg.versions.map((v, vi) => (
-                          <VersionPill key={v} version={v} latest={vi === pkg.versions.length - 1} />
-                        ))
-                    }
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((pkg, i) => {
+                const scan = scanMap.get(pkg.name)
+                const vulnCount = scan?.vulns.length ?? null
+
+                return (
+                  <tr key={pkg.name}>
+                    <td className={styles.idx}>{i + 1}</td>
+                    <td className={styles.pkgName}>{pkg.name}</td>
+                    <td className={styles.versions}>
+                      {pkg.versions.length === 0
+                        ? <span className={styles.noVersion}>—</span>
+                        : pkg.versions.map((v, vi) => (
+                            <VersionPill key={v} version={v} latest={vi === pkg.versions.length - 1} />
+                          ))
+                      }
+                    </td>
+                    <td className={styles.cveCell}>
+                      {vulnCount === null
+                        ? <span className={styles.notScanned}>—</span>
+                        : vulnCount === 0
+                          ? <span className={styles.clean}>Clean</span>
+                          : <span className={styles.vuln}>{vulnCount} CVE{vulnCount > 1 ? 's' : ''}</span>
+                      }
+                    </td>
+                    <td className={styles.indexCell}>
+                      {indexUrl && (
+                        <a
+                          className={styles.indexBtn}
+                          href={`${indexUrl}${pkg.name}/`}
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          View ↗
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>
