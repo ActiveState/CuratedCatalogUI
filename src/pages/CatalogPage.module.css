@@ -133,7 +133,18 @@
 
 .indexBtn:hover { background: var(--bg-accent); border-color: var(--accent); }
 
-.arrow { margin-left: 4px; }
+.sortActive {
+  margin-left: 6px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.sortIdle {
+  margin-left: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
 
 /* ── States ───────────────────────────────────────────── */
 .loading {

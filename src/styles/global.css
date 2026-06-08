@@ -29,9 +29,18 @@ thead th {
   user-select: none;
 }
 
-thead th.sortable { cursor: pointer; }
-thead th.sortable:hover { color: var(--accent); }
-thead th.sorted { color: var(--accent); }
+thead th.sortable {
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+thead th.sortable:hover {
+  color: var(--accent);
+  background: var(--bg-accent);
+}
+thead th.sorted {
+  color: var(--accent);
+  background: var(--bg-accent);
+}
 
 tbody tr {
   border-bottom: 1px solid var(--border);

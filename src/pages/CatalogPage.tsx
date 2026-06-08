@@ -36,8 +36,8 @@ export function CatalogPage() {
   }
 
   function arrow(col: SortCol) {
-    if (sortCol !== col) return null
-    return <span className={styles.arrow}>{sortDir === 1 ? '↑' : '↓'}</span>
+    if (sortCol === col) return <span className={styles.sortActive}>{sortDir === 1 ? '↑' : '↓'}</span>
+    return <span className={styles.sortIdle}>⇅</span>
   }
 
   const generatedStr = useMemo(() => {
