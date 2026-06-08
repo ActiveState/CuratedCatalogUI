@@ -16,7 +16,7 @@ type RowData  = CleanRow | VulnRow
 export function ScanReportPage() {
   const { scanned, loading, error } = useData()
   const [query, setQuery]   = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState<Filter>('vuln')
 
   const stats = useMemo(() => ({
     total: scanned.length,
