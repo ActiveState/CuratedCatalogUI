@@ -1,0 +1,95 @@
+.root {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.root :global(h3) {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 16px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Poppins', sans-serif;
+}
+
+.root :global(h4) {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 14px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Poppins', sans-serif;
+}
+
+.root :global(h3:first-child),
+.root :global(h4:first-child) {
+  margin-top: 0;
+}
+
+.root :global(p) {
+  margin: 0 0 10px;
+}
+
+.root :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+.root :global(strong) {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.root :global(em) {
+  font-style: italic;
+}
+
+.root :global(code) {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 11.5px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.root :global(pre) {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 10px 0;
+  overflow-x: auto;
+}
+
+.root :global(pre code) {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--text-primary);
+  border-radius: 0;
+}
+
+.root :global(ul),
+.root :global(ol) {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.root :global(li) {
+  margin-bottom: 4px;
+}
+
+.root :global(a) {
+  color: var(--accent);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.root :global(a:hover) {
+  opacity: 0.8;
+}

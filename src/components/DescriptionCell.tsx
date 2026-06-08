@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { VersionPill } from './VersionPill'
 import { CvePill } from './CvePill'
+import { MarkdownText } from './MarkdownText'
 import type { Vuln } from '../types'
 import styles from './DescriptionCell.module.css'
 
@@ -116,9 +117,9 @@ export function DescriptionCell({ text, packageName, version, allVulns, vulnInde
                   )}
                 </div>
 
-                <p className={styles.modalBody}>
-                  {current?.description ?? text}
-                </p>
+                <div className={styles.modalBody}>
+                  <MarkdownText text={current?.description ?? text} />
+                </div>
               </div>
             </div>,
             document.body
