@@ -94,7 +94,7 @@ export function ScanReportPage() {
             <p>Try a different search or filter.</p>
           </div>
         ) : (
-          <table>
+          <div className={styles.tableScroll}><table>
             <thead>
               <tr>
                 <th style={{ width: 40 }}>#</th>
@@ -118,7 +118,7 @@ export function ScanReportPage() {
                   <td className={`${styles.desc} ${styles.muted}`}>No known vulnerabilities</td>
                 </tr>
               ) : (
-                <tr key={`${row.pkg.name}-${row.vuln.id}`}>
+                <tr key={`${row.pkg.name}-${row.vuln.id}-${row.vi}`}>
                   <td className={styles.idx}>{row.n}</td>
                   <td className={styles.pkgName}>{row.vi === 0 ? row.pkg.name : ''}</td>
                   <td className={styles.ver}>{row.vi === 0 ? row.pkg.version : ''}</td>
@@ -140,7 +140,7 @@ export function ScanReportPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>
