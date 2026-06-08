@@ -59,9 +59,7 @@ export function ScanReportPage() {
                   ? v.fix.join(', ')
                   : <span className={styles.muted}>No fix available</span>}
               </td>
-              <td className={styles.desc}>
-                {v.description.length > 280 ? v.description.slice(0, 280) + '…' : v.description}
-              </td>
+              <td className={styles.desc}>{v.description}</td>
             </tr>
           )
         })
