@@ -130,7 +130,7 @@ export function parseMarkdown(raw: string): string {
   const implicitSections = 'Summary|Details|Impact|PoC|Patches|References|Acknowledgement|Remediation|Workarounds|Mitigation|Reproduction|Script|Notes|Background|Fix'
   text = text.replace(
     new RegExp(`(^|\\s{2,})(${implicitSections})(\\s{2,})`, 'g'),
-    (_, pre, word, _post) => `${pre.trim() ? '\n\n' : ''}## ${word}\n\n`
+    (_match, _pre, word) => `\n\n## ${word}\n\n`
   )
   // Re-run header normalisation after implicit heading injection
   text = text
