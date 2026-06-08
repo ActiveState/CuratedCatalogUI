@@ -55,7 +55,12 @@ export function parseMarkdown(raw: string): string {
 
   // extract fenced code blocks — wrap placeholder in \n\n so it becomes its own block
   const codeBlocks: string[] = []
-  text = text.replace(/```([^\n]*)\n?([\s\S]*?)```/g, (_, _lang, code) => {
+  // (\w*) captures only the lang identifier (e.g. "python", "bash")
+  // [^\S\n]* skips horizontal whitespace after the lang spec (but NOT newlines)
+  // \n? consumes the optional newline before the code body
+  // This handles both properly-formatted blocks AND OSV's no-newline blocks
+  // where the code content starts on the same line as the opening fence
+  text = text.replace(/```(\w*)[^\S\n]*\n?([\s\S]*?)```/g, (_, _lang, code) => {
     codeBlocks.push(`<pre><code>${esc(code.trimEnd())}</code></pre>`)
     return `\n\n\x01${codeBlocks.length - 1}\x01\n\n`
   })
