@@ -5,22 +5,22 @@
 }
 
 .root :global(h3) {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 16px 0 6px;
+  color: var(--accent);
+  margin: 14px 0 4px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   font-family: 'Poppins', sans-serif;
 }
 
 .root :global(h4) {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 14px 0 4px;
+  color: var(--accent);
+  margin: 10px 0 3px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   font-family: 'Poppins', sans-serif;
 }
 
