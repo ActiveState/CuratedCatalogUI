@@ -2,23 +2,25 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { VersionPill } from './VersionPill'
 import { CvePill } from './CvePill'
+import type { Vuln } from '../types'
 import styles from './DescriptionCell.module.css'
 
 const TRUNCATE = 90
 
 interface Props {
-  text: string
+  text: string          // current vuln description — used for row preview
   packageName?: string
   version?: string
-  vulnId?: string
-  cves?: string[]
-  fix?: string[]
+  allVulns?: Vuln[]     // all vulns for this package
+  vulnIndex?: number    // which one this row represents
 }
 
-export function DescriptionCell({ text, packageName, version, vulnId, cves, fix }: Props) {
-  const [open, setOpen] = useState(false)
-  const short = text.length > TRUNCATE ? text.slice(0, TRUNCATE).trimEnd() + '…' : text
-  const hasMore = text.length > TRUNCATE
+export function DescriptionCell({ text, packageName, version, allVulns, vulnIndex = 0 }: Props) {
+  const [open, setOpen]       = useState(false)
+  const [activeIdx, setActive] = useState(vulnIndex)
+
+  // reset to the row's own vuln each time the modal opens
+  useEffect(() => { if (open) setActive(vulnIndex) }, [open, vulnIndex])
 
   useEffect(() => {
     if (!open) return
@@ -26,6 +28,24 @@ export function DescriptionCell({ text, packageName, version, vulnId, cves, fix 
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
+
+  const short    = text.length > TRUNCATE ? text.slice(0, TRUNCATE).trimEnd() + '…' : text
+  const hasMore  = text.length > TRUNCATE
+  const current  = allVulns?.[activeIdx]
+  const hasMulti = (allVulns?.length ?? 0) > 1
+
+  // detect duplicate IDs so we can label them
+  const idCount: Record<string, number> = {}
+  allVulns?.forEach(v => { idCount[v.id] = (idCount[v.id] ?? 0) + 1 })
+  const idOccurrence: Record<number, number> = {}
+  allVulns?.forEach((v, i) => {
+    const seen = allVulns.slice(0, i).filter(x => x.id === v.id).length
+    idOccurrence[i] = seen
+  })
+
+  function pillLabel(v: Vuln, i: number) {
+    return idCount[v.id] > 1 ? `${v.id} (${idOccurrence[i] + 1})` : v.id
+  }
 
   return (
     <div className={styles.wrap}>
@@ -49,51 +69,56 @@ export function DescriptionCell({ text, packageName, version, vulnId, cves, fix 
             <div className={styles.backdrop} onClick={() => setOpen(false)}>
               <div className={styles.modal} onClick={e => e.stopPropagation()}>
 
-                {/* ── Package context ── */}
-                {packageName && (
-                  <div className={styles.pkgHeader}>
-                    <div className={styles.pkgRow}>
-                      <span className={styles.pkgName}>{packageName}</span>
-                      {version && <VersionPill version={version} latest />}
-                      <button className={styles.closeBtn} onClick={() => setOpen(false)} type="button">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                      </button>
-                    </div>
-                    {(vulnId || (cves && cves.length > 0)) && (
-                      <div className={styles.metaRow}>
-                        {vulnId && <span className={styles.vulnId}>{vulnId}</span>}
-                        {cves && cves.map(c => <CvePill key={c} id={c} />)}
-                      </div>
-                    )}
-                    {fix && fix.length > 0 && (
-                      <div className={styles.fixRow}>
-                        <span className={styles.fixLabel}>Fix available:</span>
-                        <span className={styles.fixValue}>{fix.join(', ')}</span>
-                      </div>
-                    )}
-                    {fix && fix.length === 0 && (
-                      <div className={styles.fixRow}>
-                        <span className={styles.noFix}>No fix available</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ── Fallback header when no package context ── */}
-                {!packageName && (
-                  <div className={styles.modalHeader}>
-                    <span className={styles.modalTitle}>Description</span>
+                <div className={styles.pkgHeader}>
+                  {/* package name + version + close */}
+                  <div className={styles.pkgRow}>
+                    <span className={styles.pkgName}>{packageName}</span>
+                    {version && <VersionPill version={version} latest />}
                     <button className={styles.closeBtn} onClick={() => setOpen(false)} type="button">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                     </button>
                   </div>
-                )}
 
-                <p className={styles.modalBody}>{text}</p>
+                  {/* vuln ID pills — clickable when multiple */}
+                  {allVulns && allVulns.length > 0 && (
+                    <div className={styles.vulnPills}>
+                      {allVulns.map((v, i) => (
+                        <button
+                          key={i}
+                          className={`${styles.vulnPill} ${i === activeIdx ? styles.vulnPillActive : ''}`}
+                          onClick={() => setActive(i)}
+                          type="button"
+                          title={hasMulti ? `Switch to vulnerability ${i + 1}` : undefined}
+                        >
+                          {pillLabel(v, i)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CVE aliases for active vuln */}
+                  {current && current.cves.length > 0 && (
+                    <div className={styles.metaRow}>
+                      {current.cves.map(c => <CvePill key={c} id={c} />)}
+                    </div>
+                  )}
+
+                  {/* fix version for active vuln */}
+                  {current && (
+                    <div className={styles.fixRow}>
+                      {current.fix.length > 0
+                        ? <><span className={styles.fixLabel}>Fix available:</span><span className={styles.fixValue}>{current.fix.join(', ')}</span></>
+                        : <span className={styles.noFix}>No fix available</span>
+                      }
+                    </div>
+                  )}
+                </div>
+
+                <p className={styles.modalBody}>
+                  {current?.description ?? text}
+                </p>
               </div>
             </div>,
             document.body

@@ -97,15 +97,36 @@
   flex-wrap: wrap;
 }
 
-.vulnId {
+.vulnPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vulnPill {
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 12px;
   font-weight: 600;
-  color: var(--cve-text);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.vulnPill:hover {
+  background: var(--bg-accent);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.vulnPillActive {
   background: var(--cve-bg);
-  border: 1px solid var(--cve-border);
-  padding: 2px 8px;
-  border-radius: 4px;
+  color: var(--cve-text);
+  border-color: var(--cve-border);
+  cursor: default;
 }
 
 .fixRow {

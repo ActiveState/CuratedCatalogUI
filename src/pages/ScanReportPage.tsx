@@ -140,9 +140,8 @@ export function ScanReportPage() {
                       text={row.vuln.description}
                       packageName={row.pkg.name}
                       version={row.pkg.version}
-                      vulnId={row.vuln.id}
-                      cves={row.vuln.cves}
-                      fix={row.vuln.fix}
+                      allVulns={row.pkg.vulns}
+                      vulnIndex={row.vi}
                     />
                   </td>
                 </tr>
