@@ -32,7 +32,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setPackages(catalog.packages ?? catalog)
         setGenerated(catalog.generated ?? '')
         setIndexUrl(catalog.index_url ?? '')
-        setScanned(Array.isArray(audit) ? audit : (audit.dependencies ?? []))
+
+        // Normalize raw pip-audit format → ScannedPackage shape.
+        // pip-audit uses `fix_versions` and `aliases`; our types use `fix` and `cves`.
+        const rawDeps: any[] = Array.isArray(audit) ? audit : (audit.dependencies ?? [])
+        setScanned(rawDeps.map(dep => ({
+          name:    dep.name,
+          version: dep.version,
+          vulns:   (dep.vulns ?? []).map((v: any) => ({
+            id:          v.id ?? '',
+            cves:        (v.aliases ?? v.cves ?? []).filter((a: string) => a.startsWith('CVE-')),
+            fix:         v.fix_versions ?? v.fix ?? [],
+            description: v.description ?? '',
+          })),
+        })))
+
         setLoading(false)
       })
       .catch(err => { setError(err.message); setLoading(false) })
