@@ -63,6 +63,69 @@
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
 
+/* ── Package context header ── */
+.pkgHeader {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pkgRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pkgName {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vulnId {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cve-text);
+  background: var(--cve-bg);
+  border: 1px solid var(--cve-border);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.fixRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.fixLabel { color: var(--text-secondary); }
+
+.fixValue {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  color: var(--status-ok-tx);
+  font-weight: 600;
+}
+
+.noFix { color: var(--text-muted); font-style: italic; }
+
+/* ── Fallback plain header ── */
 .modalHeader {
   display: flex;
   align-items: center;

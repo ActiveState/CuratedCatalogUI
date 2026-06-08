@@ -136,7 +136,14 @@ export function ScanReportPage() {
                       : <span className={styles.muted}>No fix available</span>}
                   </td>
                   <td className={styles.desc}>
-                    <DescriptionCell text={row.vuln.description} />
+                    <DescriptionCell
+                      text={row.vuln.description}
+                      packageName={row.pkg.name}
+                      version={row.pkg.version}
+                      vulnId={row.vuln.id}
+                      cves={row.vuln.cves}
+                      fix={row.vuln.fix}
+                    />
                   </td>
                 </tr>
               ))}
