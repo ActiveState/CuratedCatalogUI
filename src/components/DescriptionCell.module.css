@@ -14,12 +14,8 @@
   max-width: 220px;
 }
 
-.tipWrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
 .btn {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,43 +26,80 @@
   background: transparent;
   color: var(--text-muted);
   padding: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.btn:hover,
-.tipWrap:hover .btn {
-  background: var(--bg-accent);
-  color: var(--accent);
-  border-color: var(--accent);
+.btn:hover { background: var(--bg-accent); color: var(--accent); border-color: var(--accent); }
+.btnActive  { background: var(--bg-accent); color: var(--accent); border-color: var(--accent); }
+
+/* ── Portal overlay ───────────────────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.12s ease;
 }
 
-/* tooltip hidden by default */
-.tooltip {
-  display: none;
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
-  z-index: 50;
-  width: 380px;
-  max-width: 90vw;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.18));
-}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
-.tooltipInner {
+.modal {
   background: var(--bg-card);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 12px;
-  color: var(--text-primary);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  width: min(680px, 100%);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.14s ease;
 }
 
-/* show on hover of the button or the tooltip itself */
-.tipWrap:hover .tooltip,
-.tipWrap:focus-within .tooltip {
-  display: block;
+@keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.closeBtn:hover { background: var(--status-vl-bg); color: var(--status-vl-tx); border-color: var(--status-vl-bd); }
+
+.modalBody {
+  padding: 16px 18px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
 }
