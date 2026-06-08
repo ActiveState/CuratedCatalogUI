@@ -81,24 +81,17 @@ export function CatalogPage() {
           </div>
         ) : (
           <div className={styles.tableScroll}><table>
-            <colgroup>
-              <col className={styles.colIdx} />
-              <col className={styles.colPkg} />
-              <col className={styles.colVersions} />
-              <col className={styles.colCve} />
-              <col className={styles.colIndex} />
-            </colgroup>
             <thead>
               <tr>
-                <th>#</th>
-                <th className={`sortable${sortCol === 'name' ? ' sorted' : ''}`} onClick={() => handleSort('name')}>
+                <th className={styles.thIdx}>#</th>
+                <th className={`sortable${sortCol === 'name' ? ' sorted' : ''} ${styles.thPkg}`} onClick={() => handleSort('name')}>
                   Package {arrow('name')}
                 </th>
-                <th>Versions</th>
-                <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''}`} onClick={() => handleSort('cve')}>
-                  CVE Status {arrow('cve')}
+                <th className={styles.thVersions}>Versions</th>
+                <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''} ${styles.thCve}`} onClick={() => handleSort('cve')}>
+                  Vulnerabilities Summary {arrow('cve')}
                 </th>
-                <th>Index</th>
+                <th className={styles.thIndex}>Index</th>
               </tr>
             </thead>
             <tbody>
