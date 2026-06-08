@@ -48,10 +48,39 @@ The scanner uses `--disable-pip --no-deps` — it checks exact pinned versions a
 
 ---
 
-## Refreshing the data
+## Switching to a different customer index
+
+Each customer has their own private index with a unique UUID. To point the UI at a different index:
+
+1. Edit `.env` — update the three values:
+   ```
+   CATALOG_USER=your_user_here
+   CATALOG_TOKEN=<customer token>
+   CATALOG_INDEX_ID=<customer index UUID>
+   ```
+
+2. Re-fetch data and re-scan:
+   ```bash
+   cd scripts
+   python3 fetch_data.py    # pulls packages from the new index
+   bash run_scan.sh --all   # re-runs CVE scan against the new package set
+   cd ..
+   ```
+
+3. Push:
+   ```bash
+   git add public/data/
+   git commit -m "chore: switch to <customer name> index"
+   git push                 # GitHub Actions redeploys automatically
+   ```
+
+The index UUID is stored **only** in `.env` (gitignored) and baked into `public/data/catalog.json` at fetch time — no code changes, no rebuild needed.
+
+---
+
+## Refreshing the data (same customer)
 
 ```bash
-cp .env.example .env          # add your CATALOG_TOKEN
 cd scripts
 python3 fetch_data.py         # fetches all packages → ../public/data/catalog.json
 bash run_scan.sh --all        # runs CVE scan     → ../public/data/audit.json
