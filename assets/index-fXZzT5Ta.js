@@ -75,9 +75,9 @@ $1`);const n=[];t=t.replace(/```(\w*)[^\S\n]*\n?([\s\S]*?)```/g,(s,u,a)=>(n.push
 
 ${n.length-1}
 
-`));const r="Summary|Details|Impact|PoC|Patches|References|Acknowledgement|Remediation|Workarounds|Mitigation|Reproduction|Script|Notes|Background|Fix";t=t.replace(new RegExp(`(^|\\s{2,})(${r})(\\s{2,})`,"g"),(s,u,a,m)=>`${u.trim()?`
+`));const r="Summary|Details|Impact|PoC|Patches|References|Acknowledgement|Remediation|Workarounds|Mitigation|Reproduction|Script|Notes|Background|Fix";t=t.replace(new RegExp(`(^|\\s{2,})(${r})(\\s{2,})`,"g"),(s,u,a)=>`
 
-`:""}## ${a}
+## ${a}
 
 `),t=t.replace(new RegExp("(?<!\\n)\\s{2,}(#{1,4} )","g"),`
 
