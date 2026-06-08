@@ -28,109 +28,154 @@ function isTableBlock(lines: string[]): boolean {
 }
 
 function renderTable(lines: string[]): string {
-  const parseRow = (l: string) =>
-    l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim())
-  const headers = parseRow(lines[0])
-  const rows = lines.slice(2).filter(l => l.includes('|')).map(parseRow)
+  // split row on |, trim, ignore empty first/last
+  const splitRow = (l: string) =>
+    l.split('|').slice(1).map(c => c.trim()).filter((c, i, a) =>
+      !(i === a.length - 1 && c === '')
+    )
+
+  const headers = splitRow(lines[0])
+  const rows = lines.slice(2)
+    .filter(l => l.includes('|') && !/^[\s\-:|]+$/.test(l))
+    .map(splitRow)
+
   const th = headers.map(h => `<th>${inlineFmt(h)}</th>`).join('')
-  const tbody = rows.map(r =>
-    '<tr>' + r.map(c => `<td>${inlineFmt(c)}</td>`).join('') + '</tr>'
-  ).join('')
+  const tbody = rows.map(r => {
+    const cells = headers.map((_, i) => `<td>${inlineFmt(r[i] ?? '')}</td>`).join('')
+    return `<tr>${cells}</tr>`
+  }).join('')
   return `<table><thead><tr>${th}</tr></thead><tbody>${tbody}</tbody></table>`
 }
 
-// Convert inline table format "| col | col | |---| | val | val |" to line-per-row
 function normalizeInlineTable(text: string): string[] | null {
   if (!text.includes('|')) return null
   const lines = text.replace(/\| \|/g, '|\n|').split('\n').map(l => l.trim()).filter(Boolean)
   return isTableBlock(lines) ? lines : null
 }
 
+// Split an inline " - item1 - item2" format into ["item1", "item2"]
+function splitInlineList(text: string): string[] | null {
+  // Normalize leading "- " then split on " - "
+  const norm = text.replace(/^[-*]\s+/, '')
+  const parts = norm.split(/ - (?=\S)/).map(p => p.trimEnd())
+  return parts.length >= 2 ? parts : null
+}
+
+function processBody(bodyRaw: string, codeBlocks: string[], out: string[]) {
+  if (!bodyRaw.trim()) return
+
+  // Code block placeholder
+  const pcb = bodyRaw.trim().match(/^\x01(\d+)\x01$/)
+  if (pcb) { out.push(codeBlocks[+pcb[1]]); return }
+
+  // Inline table
+  const tableLines = normalizeInlineTable(bodyRaw)
+  if (tableLines) { out.push(renderTable(tableLines)); return }
+
+  // Multi-line content: split and recurse through blocks
+  const subBlocks = bodyRaw.split(/\n{2,}/).map(b => b.trim()).filter(Boolean)
+  if (subBlocks.length > 1) {
+    for (const sub of subBlocks) {
+      processBody(sub, codeBlocks, out)
+    }
+    return
+  }
+
+  const lines = bodyRaw.split('\n')
+
+  // Multi-line bullet list
+  if (lines.some(l => /^[-*]\s/.test(l.trim()))) {
+    const pre   = lines.filter(l => !/^[-*\s]/.test(l.trim()) && l.trim())
+    const items = lines.filter(l => /^[-*]\s/.test(l.trim()))
+    if (pre.length) out.push(`<p>${inlineFmt(pre.join(' '))}</p>`)
+    out.push('<ul>' + items.map(l => `<li>${inlineFmt(l.trim().slice(2))}</li>`).join('') + '</ul>')
+    return
+  }
+
+  // Inline " - item" list (e.g. "- **A**: desc - **B**: desc")
+  if (/^[-*]\s/.test(bodyRaw.trim()) || (bodyRaw.match(/ - /g) || []).length >= 2) {
+    const parts = splitInlineList(bodyRaw)
+    if (parts) {
+      out.push('<ul>' + parts.map(p => `<li>${inlineFmt(p)}</li>`).join('') + '</ul>')
+      return
+    }
+  }
+
+  // Numbered list
+  if (lines.some(l => /^\d+\.\s/.test(l.trim()))) {
+    const items = lines.filter(l => /^\d+\.\s/.test(l.trim()))
+    out.push('<ol>' + items.map(l => `<li>${inlineFmt(l.trim().replace(/^\d+\.\s/, ''))}</li>`).join('') + '</ol>')
+    return
+  }
+
+  // Paragraph
+  out.push(`<p>${inlineFmt(lines.join(' '))}</p>`)
+}
+
 export function parseMarkdown(raw: string): string {
-  // Normalise run-together section headers: "text  ## Heading" → "text\n\n## Heading"
+  // Normalise run-together section headers
   let text = raw
     .replace(/(?<!\n)\s{2,}(#{1,4} )/g, '\n\n$1')
     .replace(/\n(#{1,4} )/g, '\n\n$1')
 
   // Extract fenced code blocks first — wrap placeholder in \n\n
-  // (\w*) = lang id only; [^\S\n]* skips horizontal space; \n? optional newline
-  // Handles both "```python\ncode```" and OSV's no-newline "```python code```"
   const codeBlocks: string[] = []
   text = text.replace(/```(\w*)[^\S\n]*\n?([\s\S]*?)```/g, (_, _lang, code) => {
     codeBlocks.push(`<pre><code>${esc(code.trimEnd())}</code></pre>`)
     return `\n\n\x01${codeBlocks.length - 1}\x01\n\n`
   })
 
-  // Normalise inline tables: "| |" row boundaries → actual newlines
-  // No leading-space requirement: separator rows end with "|" (not " |")
-  text = text.replace(/\| \|/g, '|\n|')
+  // Detect implicit OSV section headings: "Summary  text" or "Impact  text"
+  // (used when OSV strips the ## markers)
+  const implicitSections = 'Summary|Details|Impact|PoC|Patches|References|Acknowledgement|Remediation|Workarounds|Mitigation|Reproduction|Script|Notes|Background|Fix'
+  text = text.replace(
+    new RegExp(`(^|\\s{2,})(${implicitSections})(\\s{2,})`, 'g'),
+    (_, pre, word, _post) => `${pre.trim() ? '\n\n' : ''}## ${word}\n\n`
+  )
+  // Re-run header normalisation after implicit heading injection
+  text = text
+    .replace(/(?<!\n)\s{2,}(#{1,4} )/g, '\n\n$1')
+    .replace(/\n(#{1,4} )/g, '\n\n$1')
 
-  // Normalise inline " - item - item" list separators → line-per-item
-  // Only when 3+ occurrences (to avoid matching simple "A - B" constructs)
-  text = text.replace(/^(.+?)( - .+){3,}$/gm, (match) => {
-    return match.replace(/ - /g, '\n- ')
-  })
+  // Normalise inline tables: "| |" row boundaries → actual newlines
+  text = text.replace(/\| \|/g, '|\n|')
 
   const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean)
   const out: string[] = []
 
-  for (let block of blocks) {
+  for (const block of blocks) {
     // Code block placeholder
     const cbm = block.match(/^\x01(\d+)\x01$/)
     if (cbm) { out.push(codeBlocks[+cbm[1]]); continue }
 
-    // Heading — title is the FIRST word; everything after is the body
-    // (OSV uses both "### Title  body" with 2+ spaces AND "### Title body" with 1 space)
-    const hm = block.match(/^(#{1,4})\s+(.+)/)
+    // Heading — title is the FIRST non-whitespace word after the # markers
+    // Use (\S+) instead of (.+) so the regex stops at whitespace, not newline
+    // We then manually collect the full body (all lines in the block)
+    const hm = block.match(/^(#{1,4})\s+(\S+)/)
     if (hm) {
       const tag = hm[1].length === 1 ? 'h3' : 'h4'
-      const spaceIdx = hm[2].search(/\s/)
-      const title   = spaceIdx > 0 ? hm[2].slice(0, spaceIdx) : hm[2]
-      const bodyRaw = spaceIdx > 0 ? hm[2].slice(spaceIdx).trimStart() : ''
+      const title = hm[2]
+
+      // Body = everything after the title on line 1, PLUS all subsequent lines
+      const allLines = block.split('\n')
+      const afterTitle = allLines[0].slice(allLines[0].indexOf(title) + title.length).trimStart()
+      const laterLines = allLines.slice(1).join('\n').trimStart()
+      const bodyRaw = [afterTitle, laterLines].filter(Boolean).join('\n').trimStart()
+
       out.push(`<${tag}>${inlineFmt(title)}</${tag}>`)
-      if (bodyRaw) {
-        // Body might itself be a code block placeholder
-        const pcb = bodyRaw.match(/^\x01(\d+)\x01$/)
-        if (pcb) {
-          out.push(codeBlocks[+pcb[1]])
-        } else {
-          const tableLines = normalizeInlineTable(bodyRaw)
-          if (tableLines) {
-            out.push(renderTable(tableLines))
-          } else {
-            out.push(`<p>${inlineFmt(bodyRaw)}</p>`)
-          }
-        }
-      }
+      processBody(bodyRaw, codeBlocks, out)
       continue
     }
-
-    const lines = block.split('\n')
 
     // Table
+    const lines = block.split('\n')
     if (isTableBlock(lines)) { out.push(renderTable(lines)); continue }
 
-    // Bullet list
-    if (lines.some(l => /^[-*]\s/.test(l.trim()))) {
-      const items = lines.filter(l => /^[-*]\s/.test(l.trim()))
-      const pre   = lines.filter(l => !/^[-*\s]/.test(l.trim()) && l.trim())
-      if (pre.length) out.push(`<p>${inlineFmt(pre.join(' '))}</p>`)
-      out.push('<ul>' + items.map(l => `<li>${inlineFmt(l.trim().slice(2))}</li>`).join('') + '</ul>')
-      continue
-    }
-
-    // Numbered list
-    if (lines.some(l => /^\d+\.\s/.test(l.trim()))) {
-      const items = lines.filter(l => /^\d+\.\s/.test(l.trim()))
-      out.push('<ol>' + items.map(l => `<li>${inlineFmt(l.trim().replace(/^\d+\.\s/, ''))}</li>`).join('') + '</ol>')
-      continue
-    }
-
-    // Paragraph
-    out.push(`<p>${inlineFmt(lines.join(' '))}</p>`)
+    // Delegate remaining to processBody (handles lists, inline lists, paragraphs)
+    processBody(block, codeBlocks, out)
   }
 
-  // Safety net: replace any code block placeholder that slipped into a paragraph
+  // Safety net: replace any code block placeholder that slipped through
   let html = out.join('\n')
   codeBlocks.forEach((cb, i) => { html = html.replaceAll(`\x01${i}\x01`, cb) })
   return html
