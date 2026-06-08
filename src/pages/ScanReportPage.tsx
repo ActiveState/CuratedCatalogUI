@@ -95,17 +95,17 @@ export function ScanReportPage() {
             <p>Try a different search or filter.</p>
           </div>
         ) : (
-          <div className={styles.tableScroll}><table style={{ minWidth: 1100 }}>
+          <div className={styles.tableScroll}><table>
             <thead>
               <tr>
                 <th style={{ width: 40 }}>#</th>
-                <th style={{ minWidth: 130 }}>Package</th>
-                <th style={{ width: 110 }}>Version</th>
-                <th style={{ width: 100 }}>Status</th>
-                <th style={{ width: 160 }}>Vuln ID</th>
-                <th style={{ width: 160 }}>CVE Aliases</th>
-                <th style={{ width: 120 }}>Fix Version</th>
-                <th style={{ minWidth: 260 }}>Description</th>
+                <th style={{ width: 160 }}>Package</th>
+                <th style={{ width: 100 }}>Version</th>
+                <th style={{ width: 90 }}>Status</th>
+                <th style={{ width: 150 }}>Vuln ID</th>
+                <th style={{ width: 150 }}>CVE Aliases</th>
+                <th style={{ width: 110 }}>Fix Version</th>
+                <th>Description</th>
               </tr>
             </thead>
             <tbody>
