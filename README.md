@@ -28,7 +28,7 @@ Opens on the **Vulnerable** filter by default. The catalog is scanned against th
 - **Stat cards** — packages scanned / vulnerable / total CVEs / clean
 - **Filter** — All / Vulnerable / Clean
 - **Per-row** — version pill, vuln ID, CVE aliases, fix version, truncated description
-- **Description modal** — click `ⓘ` to open a centered popup with full details. If a package has multiple CVEs, click any vuln pill in the modal to switch to that vulnerability's description.
+- **Description modal** — click `ⓘ` to open a centered popup with the full description rendered as formatted text: section headers, bold, inline code, code blocks, bullet lists, and clickable links. If a package has multiple CVEs, click any vuln pill in the modal to switch descriptions. Works on every future scan with no changes needed.
 
 The scanner uses `--disable-pip --no-deps` — checks exact pinned versions against OSV without installing anything (~5 min for 1700+ packages).
 
