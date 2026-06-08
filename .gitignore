@@ -1,0 +1,24 @@
+# credentials
+.env
+
+# data pipeline output
+scripts/data.json
+scripts/scan_requirements.txt
+scripts/results/
+scripts/scan_report.html
+scripts/index.html
+
+# node
+node_modules/
+dist/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
