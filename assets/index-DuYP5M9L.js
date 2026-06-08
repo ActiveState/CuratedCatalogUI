@@ -68,7 +68,7 @@ Error generating stack: `+i.message+`
 
 $1`).replace(/\n(#{1,4} )/g,`
 
-$1`);const n=[];t=t.replace(/```([^\n]*)\n?([\s\S]*?)```/g,(o,s,u)=>(n.push(`<pre><code>${go(u.trimEnd())}</code></pre>`),`
+$1`);const n=[];t=t.replace(/```(\w*)[^\S\n]*\n?([\s\S]*?)```/g,(o,s,u)=>(n.push(`<pre><code>${go(u.trimEnd())}</code></pre>`),`
 
 ${n.length-1}
 
