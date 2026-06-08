@@ -1,0 +1,77 @@
+/* ── Light theme (default) ───────────────────────────────── */
+:root {
+  --bg-page:        #f5f9ff;
+  --bg-card:        #ffffff;
+  --bg-hover:       #f5f9ff;
+  --bg-accent:      #e4efff;
+
+  --text-primary:   #141429;
+  --text-secondary: #8c8c9a;
+  --text-muted:     #babac2;
+
+  --accent:         #1257b2;
+  --accent-hover:   #0e459e;
+  --accent-light:   #e4efff;
+
+  --border:         #ebebeb;
+  --border-strong:  #dadada;
+
+  --shadow-sm:      0 1px 4px rgba(18, 87, 178, 0.06);
+  --shadow-md:      0 2px 12px rgba(18, 87, 178, 0.10);
+
+  --pill-bg:        #f5f9ff;
+  --pill-border:    #c4dcf9;
+  --pill-text:      #1257b2;
+  --pill-latest-bg: #e4efff;
+  --pill-latest-bd: #1257b2;
+
+  --status-ok-bg:   #f0fdf4;
+  --status-ok-bd:   #bbf7d0;
+  --status-ok-tx:   #16a34a;
+  --status-vl-bg:   #fef2f2;
+  --status-vl-bd:   #fecaca;
+  --status-vl-tx:   #d93025;
+
+  --cve-bg:         #fef3c7;
+  --cve-border:     #f59e0b;
+  --cve-text:       #92400e;
+}
+
+/* ── Dark theme ──────────────────────────────────────────── */
+[data-theme='dark'] {
+  --bg-page:        #111e3e;
+  --bg-card:        #13294e;
+  --bg-hover:       #1a3460;
+  --bg-accent:      #244a7f;
+
+  --text-primary:   #daeaff;
+  --text-secondary: #8c9bb8;
+  --text-muted:     #5b6f90;
+
+  --accent:         #3d65e9;
+  --accent-hover:   #5b7fef;
+  --accent-light:   #244a7f;
+
+  --border:         #24244a;
+  --border-strong:  #37407d;
+
+  --shadow-sm:      0 1px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md:      0 2px 12px rgba(0, 0, 0, 0.45);
+
+  --pill-bg:        #1a3460;
+  --pill-border:    #37407d;
+  --pill-text:      #59a0ff;
+  --pill-latest-bg: #244a7f;
+  --pill-latest-bd: #3d65e9;
+
+  --status-ok-bg:   #0d2e1a;
+  --status-ok-bd:   #1a5c36;
+  --status-ok-tx:   #4ade80;
+  --status-vl-bg:   #2e0d0d;
+  --status-vl-bd:   #5c1a1a;
+  --status-vl-tx:   #f87171;
+
+  --cve-bg:         #2e1f05;
+  --cve-border:     #78490a;
+  --cve-text:       #fbbf24;
+}

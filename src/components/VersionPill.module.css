@@ -1,0 +1,19 @@
+.pill {
+  display: inline-block;
+  background: var(--pill-bg);
+  border: 1px solid var(--pill-border);
+  color: var(--pill-text);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  margin: 2px 2px 2px 0;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.latest {
+  background: var(--pill-latest-bg);
+  border-color: var(--pill-latest-bd);
+  font-weight: 600;
+}

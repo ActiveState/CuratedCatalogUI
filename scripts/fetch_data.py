@@ -9,9 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import Request, urlopen
 from urllib.parse import urljoin
 
-BASE_URL = "https://repo.activestate.com/b4ef73d0-2ca1-40cf-8f55-b742bf8088c7/pypi/simple/"
-
-# Load credentials from .env or environment variables
+# Load credentials and index ID from .env or environment variables
 import os
 _env = {}
 _env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
@@ -21,10 +19,17 @@ if os.path.exists(_env_path):
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
             _env[k.strip()] = v.strip()
-USER = os.environ.get("CATALOG_USER", _env.get("CATALOG_USER", ""))
-PASSWORD = os.environ.get("CATALOG_TOKEN", _env.get("CATALOG_TOKEN", ""))
+
+USER     = os.environ.get("CATALOG_USER",     _env.get("CATALOG_USER",     ""))
+PASSWORD = os.environ.get("CATALOG_TOKEN",    _env.get("CATALOG_TOKEN",    ""))
+INDEX_ID = os.environ.get("CATALOG_INDEX_ID", _env.get("CATALOG_INDEX_ID", ""))
+
 if not USER or not PASSWORD:
     raise SystemExit("ERROR: set CATALOG_USER and CATALOG_TOKEN in .env or environment")
+if not INDEX_ID:
+    raise SystemExit("ERROR: set CATALOG_INDEX_ID in .env or environment")
+
+BASE_URL = f"https://repo.activestate.com/{INDEX_ID}/pypi/simple/"
 AUTH = base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode()
 
 HREF_RE = re.compile(r'href="([^"]+)"')
@@ -277,19 +282,18 @@ def main():
 
     results.sort(key=lambda x: x["name"].lower())
 
-    generated = datetime.datetime.utcnow().strftime("%b %d, %Y %H:%M UTC")
-    data_json = json.dumps(results, separators=(",", ":"))
+    out = {
+        "generated": datetime.datetime.utcnow().isoformat() + "Z",
+        "index_url": BASE_URL,
+        "packages":  results,
+    }
 
-    html_out = (HTML_TEMPLATE
-        .replace("__TOTAL__", str(total))
-        .replace("__GENERATED__", generated)
-        .replace("__BASE_URL__", BASE_URL)
-        .replace("__DATA__", data_json))
+    out_path = os.path.join(os.path.dirname(__file__), "..", "public", "data", "catalog.json")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(out, f, separators=(",", ":"))
 
-    with open("index.html", "w") as f:
-        f.write(html_out)
-
-    print(f"Wrote index.html with {total} packages — open it directly in your browser.")
+    print(f"Wrote public/data/catalog.json — {total} packages, index: {INDEX_ID}")
 
 
 if __name__ == "__main__":

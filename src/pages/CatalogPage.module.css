@@ -1,0 +1,76 @@
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 460px;
+}
+
+.searchWrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  padding: 9px 12px 9px 38px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+.search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.search::placeholder { color: var(--text-secondary); }
+
+.idx  { color: var(--text-muted); font-size: 11px; }
+
+.pkgName {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pkgName a { color: var(--accent); }
+.pkgName a:hover { text-decoration: underline; }
+
+.noVersion { color: var(--text-muted); font-size: 11px; font-style: italic; }
+
+.arrow { margin-left: 4px; }
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 80px 32px;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  padding: 40px 32px;
+  color: var(--status-vl-tx);
+  font-size: 13px;
+}

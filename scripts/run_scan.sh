@@ -9,10 +9,10 @@ ENV_FILE="$DIR/../.env"
 if [ -f "$ENV_FILE" ]; then
   set -a; source "$ENV_FILE"; set +a
 fi
-if [ -z "${CATALOG_USER:-}" ] || [ -z "${CATALOG_TOKEN:-}" ]; then
-  echo "ERROR: set CATALOG_USER and CATALOG_TOKEN in .env or environment" >&2; exit 1
+if [ -z "${CATALOG_USER:-}" ] || [ -z "${CATALOG_TOKEN:-}" ] || [ -z "${CATALOG_INDEX_ID:-}" ]; then
+  echo "ERROR: set CATALOG_USER, CATALOG_TOKEN, and CATALOG_INDEX_ID in .env or environment" >&2; exit 1
 fi
-INDEX_URL="https://${CATALOG_USER}:${CATALOG_TOKEN}@repo.activestate.com/b4ef73d0-2ca1-40cf-8f55-b742bf8088c7/pypi/simple/"
+INDEX_URL="https://${CATALOG_USER}:${CATALOG_TOKEN}@repo.activestate.com/${CATALOG_INDEX_ID}/pypi/simple/"
 
 echo "==> [1/4] Preparing scan requirements..."
 python3 prepare_scan.py "$@"
