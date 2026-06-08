@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useData } from '../context/DataContext'
 import { CvePill } from '../components/CvePill'
 import { StatCard } from '../components/StatCard'
+import { DescriptionCell } from '../components/DescriptionCell'
 import styles from './ScanReportPage.module.css'
 
 type Filter = 'all' | 'vuln' | 'clean'
@@ -59,7 +60,7 @@ export function ScanReportPage() {
                   ? v.fix.join(', ')
                   : <span className={styles.muted}>No fix available</span>}
               </td>
-              <td className={styles.desc}>{v.description}</td>
+              <td className={styles.desc}><DescriptionCell text={v.description} /></td>
             </tr>
           )
         })
