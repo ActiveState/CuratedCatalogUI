@@ -98,7 +98,7 @@ export function ScanReportPage() {
           <div className={styles.tableScroll}><table>
             <thead>
               <tr>
-                <th style={{ width: '3%' }}>#</th>
+                <th style={{ width: 44 }}>#</th>
                 <th style={{ width: '13%' }}>Package</th>
                 <th style={{ width: '8%' }}>Version</th>
                 <th style={{ width: '10%' }}>Status</th>
