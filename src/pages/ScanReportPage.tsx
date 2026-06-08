@@ -3,70 +3,45 @@ import { useData } from '../context/DataContext'
 import { CvePill } from '../components/CvePill'
 import { StatCard } from '../components/StatCard'
 import { DescriptionCell } from '../components/DescriptionCell'
+import type { ScannedPackage, Vuln } from '../types'
 import styles from './ScanReportPage.module.css'
 
 type Filter = 'all' | 'vuln' | 'clean'
 
+type CleanRow = { type: 'clean'; pkg: ScannedPackage; n: number }
+type VulnRow  = { type: 'vuln';  pkg: ScannedPackage; vuln: Vuln; vi: number; n: number }
+type RowData  = CleanRow | VulnRow
+
 export function ScanReportPage() {
   const { scanned, loading, error } = useData()
-  const [query, setQuery] = useState('')
+  const [query, setQuery]   = useState('')
   const [filter, setFilter] = useState<Filter>('all')
 
   const stats = useMemo(() => ({
-    total:   scanned.length,
-    vuln:    scanned.filter(p => p.vulns.length > 0).length,
-    cves:    scanned.reduce((n, p) => n + p.vulns.length, 0),
-    clean:   scanned.filter(p => p.vulns.length === 0).length,
+    total: scanned.length,
+    vuln:  scanned.filter(p => p.vulns.length > 0).length,
+    cves:  scanned.reduce((n, p) => n + p.vulns.length, 0),
+    clean: scanned.filter(p => p.vulns.length === 0).length,
   }), [scanned])
 
-  const rows = useMemo(() => {
+  const flatRows = useMemo((): RowData[] => {
     const q = query.toLowerCase()
     let res = q ? scanned.filter(p => p.name.toLowerCase().includes(q)) : scanned
     if (filter === 'vuln')  res = res.filter(p => p.vulns.length > 0)
     if (filter === 'clean') res = res.filter(p => p.vulns.length === 0)
 
-    const out: React.ReactNode[] = []
+    const rows: RowData[] = []
     let n = 0
     res.forEach(pkg => {
       if (pkg.vulns.length === 0) {
-        n++
-        out.push(
-          <tr key={pkg.name} data-status="clean">
-            <td className={styles.idx}>{n}</td>
-            <td className={styles.pkgName}>{pkg.name}</td>
-            <td className={styles.ver}>{pkg.version}</td>
-            <td><span className={styles.statusOk}>Clean</span></td>
-            <td>—</td><td>—</td><td>—</td>
-            <td className={`${styles.desc} ${styles.muted}`}>No known vulnerabilities</td>
-          </tr>
-        )
+        rows.push({ type: 'clean', pkg, n: ++n })
       } else {
-        pkg.vulns.forEach((v, vi) => {
-          n++
-          out.push(
-            <tr key={`${pkg.name}-${v.id}`} data-status="vuln">
-              <td className={styles.idx}>{n}</td>
-              <td className={styles.pkgName}>{vi === 0 ? pkg.name : ''}</td>
-              <td className={styles.ver}>{vi === 0 ? pkg.version : ''}</td>
-              <td>{vi === 0 ? <span className={styles.statusVuln}>Vulnerable</span> : ''}</td>
-              <td className={styles.vulnId}>{v.id}</td>
-              <td className={styles.cveCol}>
-                {v.cves.length > 0
-                  ? v.cves.map(c => <CvePill key={c} id={c} />)
-                  : <span className={styles.muted}>—</span>}
-              </td>
-              <td className={styles.fix}>
-                {v.fix.length > 0
-                  ? v.fix.join(', ')
-                  : <span className={styles.muted}>No fix available</span>}
-              </td>
-              <td className={styles.desc}><DescriptionCell text={v.description} /></td>
-            </tr>
-          )
+        pkg.vulns.forEach((vuln, vi) => {
+          rows.push({ type: 'vuln', pkg, vuln, vi, n: ++n })
         })
       }
     })
-    return { rows: out, count: n }
+    return rows
   }, [scanned, query, filter])
 
   if (loading) return (
@@ -109,11 +84,11 @@ export function ScanReportPage() {
             </button>
           ))}
         </div>
-        <p className="count-label">Showing <b>{rows.count.toLocaleString()}</b> rows</p>
+        <p className="count-label">Showing <b>{flatRows.length.toLocaleString()}</b> rows</p>
       </div>
 
       <div className="card">
-        {rows.rows.length === 0 ? (
+        {flatRows.length === 0 ? (
           <div className="empty-state">
             <h3>No results match your filter</h3>
             <p>Try a different search or filter.</p>
@@ -132,7 +107,39 @@ export function ScanReportPage() {
                 <th>Description</th>
               </tr>
             </thead>
-            <tbody>{rows.rows}</tbody>
+            <tbody>
+              {flatRows.map(row => row.type === 'clean' ? (
+                <tr key={row.pkg.name}>
+                  <td className={styles.idx}>{row.n}</td>
+                  <td className={styles.pkgName}>{row.pkg.name}</td>
+                  <td className={styles.ver}>{row.pkg.version}</td>
+                  <td><span className={styles.statusOk}>Clean</span></td>
+                  <td>—</td><td>—</td><td>—</td>
+                  <td className={`${styles.desc} ${styles.muted}`}>No known vulnerabilities</td>
+                </tr>
+              ) : (
+                <tr key={`${row.pkg.name}-${row.vuln.id}`}>
+                  <td className={styles.idx}>{row.n}</td>
+                  <td className={styles.pkgName}>{row.vi === 0 ? row.pkg.name : ''}</td>
+                  <td className={styles.ver}>{row.vi === 0 ? row.pkg.version : ''}</td>
+                  <td>{row.vi === 0 ? <span className={styles.statusVuln}>Vulnerable</span> : ''}</td>
+                  <td className={styles.vulnId}>{row.vuln.id}</td>
+                  <td className={styles.cveCol}>
+                    {row.vuln.cves.length > 0
+                      ? row.vuln.cves.map(c => <CvePill key={c} id={c} />)
+                      : <span className={styles.muted}>—</span>}
+                  </td>
+                  <td className={styles.fix}>
+                    {row.vuln.fix.length > 0
+                      ? row.vuln.fix.join(', ')
+                      : <span className={styles.muted}>No fix available</span>}
+                  </td>
+                  <td className={styles.desc}>
+                    <DescriptionCell text={row.vuln.description} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         )}
       </div>
