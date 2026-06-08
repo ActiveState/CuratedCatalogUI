@@ -93,3 +93,26 @@
 .root :global(a:hover) {
   opacity: 0.8;
 }
+
+.root :global(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.root :global(th) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: 7px 12px;
+  border: 1px solid var(--border-strong);
+}
+
+.root :global(td) {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
