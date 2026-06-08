@@ -101,11 +101,11 @@ export function ScanReportPage() {
                 <th style={{ width: 52 }}>#</th>
                 <th style={{ width: '24%' }}>Package</th>
                 <th style={{ width: '11%' }}>Version</th>
-                <th style={{ width: '10%' }}>Status</th>
+                <th style={{ width: '9%' }}>Status</th>
                 <th style={{ width: '12%' }}>Vuln ID</th>
                 <th style={{ width: '11%' }}>CVE Aliases</th>
                 <th style={{ width: '12%' }}>Fix Version</th>
-                <th style={{ width: '17%' }}>Description</th>
+                <th style={{ width: '18%' }}>Description</th>
               </tr>
             </thead>
             <tbody>
