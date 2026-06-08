@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext'
 import { CvePill } from '../components/CvePill'
 import { StatCard } from '../components/StatCard'
 import { DescriptionCell } from '../components/DescriptionCell'
+import { VersionPill } from '../components/VersionPill'
 import type { ScannedPackage, Vuln } from '../types'
 import styles from './ScanReportPage.module.css'
 
@@ -94,17 +95,17 @@ export function ScanReportPage() {
             <p>Try a different search or filter.</p>
           </div>
         ) : (
-          <div className={styles.tableScroll}><table>
+          <div className={styles.tableScroll}><table style={{ minWidth: 1100 }}>
             <thead>
               <tr>
                 <th style={{ width: 40 }}>#</th>
-                <th>Package</th>
+                <th style={{ minWidth: 130 }}>Package</th>
                 <th style={{ width: 110 }}>Version</th>
                 <th style={{ width: 100 }}>Status</th>
                 <th style={{ width: 160 }}>Vuln ID</th>
                 <th style={{ width: 160 }}>CVE Aliases</th>
                 <th style={{ width: 120 }}>Fix Version</th>
-                <th>Description</th>
+                <th style={{ minWidth: 260 }}>Description</th>
               </tr>
             </thead>
             <tbody>
@@ -112,7 +113,7 @@ export function ScanReportPage() {
                 <tr key={row.pkg.name}>
                   <td className={styles.idx}>{row.n}</td>
                   <td className={styles.pkgName}>{row.pkg.name}</td>
-                  <td className={styles.ver}>{row.pkg.version}</td>
+                  <td><VersionPill version={row.pkg.version} latest /></td>
                   <td><span className={styles.statusOk}>Clean</span></td>
                   <td>—</td><td>—</td><td>—</td>
                   <td className={`${styles.desc} ${styles.muted}`}>No known vulnerabilities</td>
@@ -121,7 +122,7 @@ export function ScanReportPage() {
                 <tr key={`${row.pkg.name}-${row.vuln.id}-${row.vi}`}>
                   <td className={styles.idx}>{row.n}</td>
                   <td className={styles.pkgName}>{row.vi === 0 ? row.pkg.name : ''}</td>
-                  <td className={styles.ver}>{row.vi === 0 ? row.pkg.version : ''}</td>
+                  <td>{row.vi === 0 ? <VersionPill version={row.pkg.version} latest /> : ''}</td>
                   <td>{row.vi === 0 ? <span className={styles.statusVuln}>Vulnerable</span> : ''}</td>
                   <td className={styles.vulnId}>{row.vuln.id}</td>
                   <td className={styles.cveCol}>
