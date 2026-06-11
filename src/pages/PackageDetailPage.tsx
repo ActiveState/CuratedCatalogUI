@@ -1,22 +1,18 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useData } from '../context/DataContext'
+import { useLanguageData } from '../hooks/useLanguageData'
+import { getLanguage } from '../languages'
 import { VersionPill } from '../components/VersionPill'
 import { CvePill } from '../components/CvePill'
 import styles from './PackageDetailPage.module.css'
 
 export function PackageDetailPage() {
-  const { name } = useParams<{ name: string }>()
-  const { packages, scanned, indexUrl, loading } = useData()
+  const { lang = 'python', name } = useParams<{ lang: string; name: string }>()
+  const { packages, scanned, indexUrl, loading } = useLanguageData(lang)
+  const language = getLanguage(lang)
 
-  const pkg = useMemo(
-    () => packages.find(p => p.name === name),
-    [packages, name]
-  )
-  const scan = useMemo(
-    () => scanned.find(p => p.name === name),
-    [scanned, name]
-  )
+  const pkg  = useMemo(() => packages.find(p => p.name === name), [packages, name])
+  const scan = useMemo(() => scanned.find(p => p.name === name),  [scanned, name])
 
   if (loading) return <div className={styles.loading}><div className={styles.spinner} /></div>
 
@@ -25,7 +21,7 @@ export function PackageDetailPage() {
       <div className="empty-state" style={{ marginTop: 40 }}>
         <h3>Package not found</h3>
         <p>"{name}" is not in the catalog.</p>
-        <Link to="/" className={styles.back}>← Back to catalog</Link>
+        <Link to={`/${lang}`} className={styles.back}>← Back to catalog</Link>
       </div>
     </div>
   )
@@ -35,16 +31,18 @@ export function PackageDetailPage() {
   return (
     <div className="page-wrap">
       <div className={styles.header}>
-        <Link to="/" className={styles.back}>← Packages</Link>
+        <Link to={`/${lang}`} className={styles.back}>← Packages</Link>
         <div className={styles.titleRow}>
           <h1 className={styles.pkgName}>{pkg.name}</h1>
           {vulnCount > 0
             ? <span className={styles.badgeVuln}>{vulnCount} CVE{vulnCount > 1 ? 's' : ''}</span>
             : <span className={styles.badgeOk}>Clean</span>
           }
-          <a className={styles.indexLink} href={`${indexUrl}${pkg.name}/`} target="_blank" rel="noopener">
-            View in index ↗
-          </a>
+          {language.hasIndexUrl && indexUrl && (
+            <a className={styles.indexLink} href={`${indexUrl}${pkg.name}/`} target="_blank" rel="noopener">
+              View in index ↗
+            </a>
+          )}
         </div>
       </div>
 

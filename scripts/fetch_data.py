@@ -288,7 +288,7 @@ def main():
         "packages":  results,
     }
 
-    out_path = os.path.join(os.path.dirname(__file__), "..", "public", "data", "catalog.json")
+    out_path = os.path.join(os.path.dirname(__file__), "..", "public", "data", "python", "catalog.json")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(out, f, separators=(",", ":"))

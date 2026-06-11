@@ -32,20 +32,15 @@
 
 /* ── Table scroll wrapper ─────────────────────────────── */
 .tableScroll { overflow-x: auto; }
-.tableScroll table { table-layout: auto; width: 100%; }
+.tableScroll table { table-layout: fixed; width: 100%; }
+.tableScroll td, .tableScroll th { overflow: hidden; }
 
-/* ── Column widths — auto layout ─────────────────────── */
-/* table-layout: auto lets Versions shrink to pill content;
-   Vulnerabilities Summary (width:100%) gets all remaining space */
+/* ── Column widths — fixed layout ─────────────────────── */
 .thIdx      { width: 40px; white-space: nowrap; }
-.thPkg      { min-width: 180px; white-space: nowrap; }
-.thVersions { white-space: nowrap; }
-.thCve      { width: 100%; white-space: nowrap; }
-.thIndex    { white-space: nowrap; }
-
-@media (max-width: 1199px) {
-  .thPkg { min-width: 150px; }
-}
+.thPkg      { width: 22%; white-space: nowrap; }
+.thVersions { width: 14%; white-space: nowrap; }
+.thCve      { white-space: nowrap; }   /* fills remaining space */
+.thIndex    { width: 110px; white-space: nowrap; }
 
 /* ── Cells ────────────────────────────────────────────── */
 .idx {
@@ -62,6 +57,7 @@
   font-size: 12px;
   color: var(--accent);
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .versions {

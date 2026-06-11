@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { useData } from '../context/DataContext'
+import { useParams } from 'react-router-dom'
+import { useLanguageData } from '../hooks/useLanguageData'
+import { getLanguage } from '../languages'
 import { CvePill } from '../components/CvePill'
 import { StatCard } from '../components/StatCard'
 import { DescriptionCell } from '../components/DescriptionCell'
@@ -14,9 +16,13 @@ type VulnRow  = { type: 'vuln';  pkg: ScannedPackage; vuln: Vuln; vi: number; n:
 type RowData  = CleanRow | VulnRow
 
 export function ScanReportPage() {
-  const { scanned, loading, error } = useData()
-  const [query, setQuery]   = useState('')
-  const [filter, setFilter] = useState<Filter>('vuln')
+  const { lang = 'python' } = useParams<{ lang: string }>()
+  const { packages, scanned, loading, error } = useLanguageData(lang)
+  const language = getLanguage(lang)
+
+  const [query, setQuery]       = useState('')
+  const [filter, setFilter]     = useState<Filter>('vuln')
+  const [showUnaudited, setShowUnaudited] = useState(false)
 
   const stats = useMemo(() => ({
     total: scanned.length,
@@ -57,8 +63,35 @@ export function ScanReportPage() {
         <StatCard label="Vulnerable"        value={stats.vuln}  variant={stats.vuln  > 0 ? 'red'   : 'green'} />
         <StatCard label="Total CVEs"        value={stats.cves}  variant={stats.cves  > 0 ? 'amber' : 'green'} />
         <StatCard label="Clean"             value={stats.clean} variant="green" />
-        <StatCard label="Scanner" value="pip-audit · OSV" />
+        <StatCard label="Scanner" value={language.scanTool} />
       </div>
+      {packages.length > scanned.length && (() => {
+        const scannedNames = new Set(scanned.map(p => p.name))
+        const unaudited = packages.filter(p => !scannedNames.has(p.name))
+        return (
+          <>
+            <div className={styles.notice}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0}}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>
+                <b>{unaudited.length.toLocaleString()}</b> of {packages.length.toLocaleString()} catalog
+                packages were excluded from the scan — they have no published versions in the registry and cannot be audited.
+              </span>
+              <button className={styles.noticeBtn} onClick={() => setShowUnaudited(o => !o)}>
+                {showUnaudited ? 'Hide list' : 'View unaudited packages'}
+              </button>
+            </div>
+            {showUnaudited && (
+              <div className={styles.unauditedList}>
+                {unaudited.map(p => (
+                  <span key={p.name} className={styles.unauditedPkg}>{p.name}</span>
+                ))}
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       <div className="toolbar">
         <div className={styles.searchWrap}>
@@ -92,7 +125,7 @@ export function ScanReportPage() {
         {flatRows.length === 0 ? (
           <div className="empty-state">
             <h3>No results match your filter</h3>
-            <p>Try a different search or filter.</p>
+            <p>{scanned.length === 0 ? 'No scan data available yet for this language.' : 'Try a different search or filter.'}</p>
           </div>
         ) : (
           <div className={styles.tableScroll}><table>

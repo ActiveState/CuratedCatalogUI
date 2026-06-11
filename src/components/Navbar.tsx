@@ -1,5 +1,7 @@
-import { NavLink } from 'react-router-dom'
+import { useRef, useState, useEffect } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
+import { LANGUAGES, getLanguage } from '../languages'
 import styles from './Navbar.module.css'
 
 const LOGO = (
@@ -23,6 +25,31 @@ const LOGO = (
 
 export function Navbar() {
   const { theme, toggle } = useTheme()
+  const location = useLocation()
+  const navigate  = useNavigate()
+
+  const pathParts   = location.pathname.split('/')
+  const lang        = pathParts[1] || 'python'
+  const isCveReport = location.pathname.endsWith('/cve-report')
+  const currentLang = getLanguage(lang)
+
+  const [open, setOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [])
+
+  function switchLang(newLang: string) {
+    navigate(isCveReport ? `/${newLang}/cve-report` : `/${newLang}`)
+    setOpen(false)
+  }
 
   return (
     <nav className={styles.nav}>
@@ -30,16 +57,73 @@ export function Navbar() {
       <div className={styles.divider} />
       <span className={styles.title}>Curated Catalog</span>
 
+      {/* Language dropdown */}
+      <div className={styles.langWrap} ref={dropRef}>
+        <button
+          className={`${styles.langTrigger} ${open ? styles.langTriggerOpen : ''}`}
+          onClick={() => setOpen(o => !o)}
+        >
+          <span className={styles.langIcon}>{currentLang.icon}</span>
+          <span className={styles.langName}>{currentLang.label}</span>
+          <svg
+            className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+            width="12" height="12" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.5"
+          >
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        {open && (
+          <div className={styles.langMenu}>
+            {LANGUAGES.map(l => (
+              <button
+                key={l.id}
+                className={[
+                  styles.langItem,
+                  l.id === lang      ? styles.langItemActive    : '',
+                  l.disabled         ? styles.langItemDisabled  : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => !l.disabled && switchLang(l.id)}
+                title={l.disabled ? `${l.label} — coming soon` : undefined}
+              >
+                <span className={styles.langItemIcon}>{l.icon}</span>
+                <span className={styles.langItemLabel}>{l.label}</span>
+                {l.id === lang && !l.disabled && (
+                  <svg className={styles.check} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+                {l.disabled && (
+                  <span className={styles.soon}>soon</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className={styles.links}>
-        <NavLink to="/" end className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}>
+        <NavLink
+          to={`/${lang}`}
+          end
+          className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}
+        >
           Packages
         </NavLink>
-        <NavLink to="/cve-report" className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}>
+        <NavLink
+          to={`/${lang}/cve-report`}
+          className={({ isActive }) => isActive ? `${styles.link} ${styles.active}` : styles.link}
+        >
           CVE Report
         </NavLink>
       </div>
 
-      <button className={styles.themeBtn} onClick={toggle} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+      <button
+        className={styles.themeBtn}
+        onClick={toggle}
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      >
         {theme === 'light' ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>

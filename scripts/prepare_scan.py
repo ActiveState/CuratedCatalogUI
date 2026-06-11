@@ -17,7 +17,9 @@ POPULAR = [
     "pillow", "paramiko", "aiohttp", "httpx", "uvicorn", "pytest", "click",
 ]
 
-with open("data.json") as f:
+import os
+_catalog = os.path.join(os.path.dirname(__file__), "..", "public", "data", "python", "catalog.json")
+with open(_catalog) as f:
     packages = json.load(f)["packages"]
 
 if ALL_MODE:

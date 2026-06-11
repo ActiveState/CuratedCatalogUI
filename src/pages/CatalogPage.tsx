@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react'
-import { useData } from '../context/DataContext'
+import { useParams } from 'react-router-dom'
+import { useLanguageData } from '../hooks/useLanguageData'
+import { getLanguage } from '../languages'
 import { VersionPill } from '../components/VersionPill'
 import styles from './CatalogPage.module.css'
 
 type SortCol = 'name' | 'cve'
 
 export function CatalogPage() {
-  const { packages, scanned, generated, indexUrl, loading, error } = useData()
+  const { lang = 'python' } = useParams<{ lang: string }>()
+  const { packages, scanned, generated, indexUrl, loading, error } = useLanguageData(lang)
+  const language = getLanguage(lang)
+
   const [query, setQuery]     = useState('')
   const [sortCol, setSortCol] = useState<SortCol>('name')
   const [sortDir, setSortDir] = useState<1 | -1>(1)
 
-  const scanMap = useMemo(() => {
-    const m = new Map(scanned.map(p => [p.name, p]))
-    return m
-  }, [scanned])
+  const scanMap = useMemo(() => new Map(scanned.map(p => [p.name, p])), [scanned])
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
@@ -77,7 +79,7 @@ export function CatalogPage() {
         {filtered.length === 0 ? (
           <div className="empty-state">
             <h3>No packages found</h3>
-            <p>Try a different search term.</p>
+            <p>{packages.length === 0 ? 'No data available yet for this language.' : 'Try a different search term.'}</p>
           </div>
         ) : (
           <div className={styles.tableScroll}><table>
@@ -91,7 +93,7 @@ export function CatalogPage() {
                 <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''} ${styles.thCve}`} onClick={() => handleSort('cve')}>
                   Vulnerabilities Summary {arrow('cve')}
                 </th>
-                <th className={styles.thIndex}>Index</th>
+                {language.hasIndexUrl && <th className={styles.thIndex}>Index</th>}
               </tr>
             </thead>
             <tbody>
@@ -122,18 +124,15 @@ export function CatalogPage() {
                             })
                       }
                     </td>
-                    <td className={styles.indexCell}>
-                      {indexUrl && (
-                        <a
-                          className={styles.indexBtn}
-                          href={`${indexUrl}${pkg.name}/`}
-                          target="_blank"
-                          rel="noopener"
-                        >
-                          View ↗
-                        </a>
-                      )}
-                    </td>
+                    {language.hasIndexUrl && (
+                      <td className={styles.indexCell}>
+                        {indexUrl && (
+                          <a className={styles.indexBtn} href={`${indexUrl}${pkg.name}/`} target="_blank" rel="noopener">
+                            View ↗
+                          </a>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )
               })}

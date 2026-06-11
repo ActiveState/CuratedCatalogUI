@@ -44,8 +44,13 @@ if [ ! -f "${DIR}/results/audit.json" ]; then
 fi
 
 echo ""
-echo "==> [4/4] Generating HTML report..."
+echo "==> [4/4] Copying audit.json to public/data/python/..."
+mkdir -p "${DIR}/../public/data/python"
+cp "${DIR}/results/audit.json" "${DIR}/../public/data/python/audit.json"
+
+echo ""
+echo "==> [5/5] Generating HTML report..."
 python3 generate_report.py
 
 echo ""
-echo "Done. Open scan_report.html in your browser."
+echo "Done. public/data/python/audit.json updated. Open scan_report.html in your browser."

@@ -5,7 +5,7 @@
   height: 61px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
@@ -22,12 +22,119 @@
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
+/* ── Language dropdown ───────────────────────────────────────────────── */
+.langWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.langTrigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.langTrigger:hover,
+.langTriggerOpen {
+  background: var(--bg-accent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.langIcon  { font-size: 14px; line-height: 1; }
+.langName  { font-family: 'Poppins', sans-serif; }
+
+.chevron {
+  color: var(--text-secondary);
+  transition: transform 0.18s;
+  flex-shrink: 0;
+}
+.chevronOpen { transform: rotate(180deg); }
+
+.langMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.langItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+
+.langItem:not(.langItemDisabled):hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.langItemActive {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.langItemDisabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.langItemIcon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.langItemLabel { flex: 1; font-family: 'Poppins', sans-serif; }
+
+.check { color: var(--accent); margin-left: auto; flex-shrink: 0; }
+
+.soon {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 1px 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ── Page nav links ──────────────────────────────────────────────────── */
 .links {
   display: flex;
   gap: 4px;
-  margin-left: 8px;
 }
 
 .link {
@@ -41,9 +148,9 @@
 }
 
 .link:hover { background: var(--bg-accent); color: var(--accent); }
+.active     { background: var(--bg-accent); color: var(--accent); }
 
-.active { background: var(--bg-accent); color: var(--accent); }
-
+/* ── Theme toggle ────────────────────────────────────────────────────── */
 .themeBtn {
   margin-left: auto;
   display: flex;
@@ -56,6 +163,7 @@
   background: transparent;
   color: var(--text-secondary);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
 }
 
 .themeBtn:hover {
@@ -65,6 +173,8 @@
 }
 
 @media (max-width: 640px) {
-  .nav { padding: 0 16px; }
-  .title { display: none; }
+  .nav    { padding: 0 16px; gap: 10px; }
+  .title  { display: none; }
+  .langName { display: none; }
+  .langTrigger { padding: 5px 8px; }
 }
