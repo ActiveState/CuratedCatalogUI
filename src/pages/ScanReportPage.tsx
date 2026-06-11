@@ -79,7 +79,7 @@ export function ScanReportPage() {
                 packages were excluded from the scan — they have no published versions in the registry and cannot be audited.
               </span>
               <button className={styles.noticeBtn} onClick={() => setShowUnaudited(o => !o)}>
-                {showUnaudited ? 'Hide list' : 'View unaudited packages'}
+                {showUnaudited ? 'Hide unaudited packages' : 'View unaudited packages'}
               </button>
             </div>
             {showUnaudited && (

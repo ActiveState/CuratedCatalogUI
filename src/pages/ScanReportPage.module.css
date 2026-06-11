@@ -7,7 +7,7 @@
 
 .notice {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   margin-top: 12px;
   padding: 9px 14px;
@@ -20,7 +20,7 @@
   line-height: 1.5;
 }
 
-.notice svg { margin-top: 1px; color: var(--accent); }
+.notice svg { color: var(--accent); }
 .notice b   { color: var(--text-primary); }
 
 .noticeBtn {
