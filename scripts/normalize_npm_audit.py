@@ -23,7 +23,7 @@ def extract_fix_versions(vuln: dict) -> list[str]:
     fixes = set()
     for affected in vuln.get("affected", []):
         for r in affected.get("ranges", []):
-            if r.get("type") == "ECOSYSTEM":
+            if r.get("type") in ("ECOSYSTEM", "SEMVER"):
                 for event in r.get("events", []):
                     if "fixed" in event:
                         fixes.add(event["fixed"])
