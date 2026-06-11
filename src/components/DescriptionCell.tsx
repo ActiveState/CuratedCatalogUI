@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { VersionPill } from './VersionPill'
 import { CvePill } from './CvePill'
@@ -19,9 +19,13 @@ interface Props {
 export function DescriptionCell({ text, packageName, version, allVulns, vulnIndex = 0 }: Props) {
   const [open, setOpen]       = useState(false)
   const [activeIdx, setActive] = useState(vulnIndex)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   // reset to the row's own vuln each time the modal opens
   useEffect(() => { if (open) setActive(vulnIndex) }, [open, vulnIndex])
+
+  // scroll body back to top when switching between vulns
+  useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = 0 }, [activeIdx])
 
   useEffect(() => {
     if (!open) return
@@ -117,7 +121,7 @@ export function DescriptionCell({ text, packageName, version, allVulns, vulnInde
                   )}
                 </div>
 
-                <div className={styles.modalBody}>
+                <div className={styles.modalBody} ref={bodyRef}>
                   <MarkdownText text={current?.description ?? text} />
                 </div>
               </div>

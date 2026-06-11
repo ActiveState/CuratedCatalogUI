@@ -148,19 +148,12 @@ export function parseMarkdown(raw: string): string {
     const cbm = block.match(/^\x01(\d+)\x01$/)
     if (cbm) { out.push(codeBlocks[+cbm[1]]); continue }
 
-    // Heading — title is the FIRST non-whitespace word after the # markers
-    // Use (\S+) instead of (.+) so the regex stops at whitespace, not newline
-    // We then manually collect the full body (all lines in the block)
-    const hm = block.match(/^(#{1,4})\s+(\S+)/)
+    // Heading — capture the full first line as the title, subsequent lines as body
+    const hm = block.match(/^(#{1,4})\s+([^\n]+)/)
     if (hm) {
       const tag = hm[1].length === 1 ? 'h3' : 'h4'
-      const title = hm[2]
-
-      // Body = everything after the title on line 1, PLUS all subsequent lines
-      const allLines = block.split('\n')
-      const afterTitle = allLines[0].slice(allLines[0].indexOf(title) + title.length).trimStart()
-      const laterLines = allLines.slice(1).join('\n').trimStart()
-      const bodyRaw = [afterTitle, laterLines].filter(Boolean).join('\n').trimStart()
+      const title = hm[2].trimEnd()
+      const bodyRaw = block.split('\n').slice(1).join('\n').trimStart()
 
       out.push(`<${tag}>${inlineFmt(title)}</${tag}>`)
       processBody(bodyRaw, codeBlocks, out)
