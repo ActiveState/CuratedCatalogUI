@@ -1,6 +1,6 @@
 # CuratedCatalog UI
 
-A demo interface for the ActiveState Curated Catalog — a private PyPI index of curated, vetted Python packages. Built for customer POVs and sales demos.
+A demo interface for the ActiveState Curated Catalog — a curated, vetted package index covering multiple languages. Built for customer POVs and sales demos.
 
 Live: **https://activestate.github.io/CuratedCatalogUI/**
 
@@ -8,29 +8,33 @@ Live: **https://activestate.github.io/CuratedCatalogUI/**
 
 ## What this is
 
-The ActiveState Curated Catalog is a private PyPI-compatible package index. This UI gives customers a visual overview of the catalog's contents and security posture — two things that are otherwise invisible when using the index via `pip`.
+The ActiveState Curated Catalog provides private, security-vetted package indexes. This UI gives customers a visual overview of catalog contents and security posture across languages — things that are otherwise invisible when consuming the index via a package manager.
 
-### Catalog browser (`/`)
+Languages currently live: **Python**, **JavaScript**. Java, Go, Rust, PHP, C#/.NET, R, and C/C++ are shown in the navbar as coming soon.
+
+### Catalog browser (`/:lang`)
 
 Full package table with inline information — no need to click into individual packages:
 
-- **Package name** — single-line monospace, never clipped
-- **Versions** — all version pills in the row, latest highlighted; column auto-sizes to content
-- **Vulnerabilities Summary** — CVE alias or vuln ID pill per vulnerability (`CVE-2026-48710`, `PYSEC-...`), or a green **Clean** badge if none. Sortable — click to put vulnerable packages first.
-- **View ↗** — direct link to the package's page in the private index
+- **Package name** — monospace, truncates gracefully on very long names
+- **Versions** — all version pills in the row, latest highlighted; column is fixed-width so layout is consistent across languages
+- **Vulnerabilities Summary** — CVE alias or vuln ID pill per vulnerability (`CVE-…`, `PYSEC-…`, `GHSA-…`), or a green **Clean** badge if none. Sortable — click to put vulnerable packages first.
+- **View ↗** *(Python only)* — direct link to the package's page in the private PyPI index
 
 Live search + sortable columns (name, CVE status).
 
-### CVE scan report (`/cve-report`)
+### CVE scan report (`/:lang/cve-report`)
 
-Opens on the **Vulnerable** filter by default. The catalog is scanned against the [OSV advisory database](https://osv.dev/) using `pip-audit` inside a Docker container.
+Opens on the **Vulnerable** filter by default.
 
-- **Stat cards** — packages scanned / vulnerable / total CVEs / clean
+- **Stat cards** — packages scanned / vulnerable / total CVEs / clean / scanner tool
 - **Filter** — All / Vulnerable / Clean
 - **Per-row** — version pill, vuln ID, CVE aliases, fix version, truncated description
-- **Description modal** — click `ⓘ` to open a centered popup with the full description rendered as formatted text: section headers, bold, inline code, code blocks, bullet lists, and clickable links. If a package has multiple CVEs, click any vuln pill in the modal to switch descriptions. Works on every future scan with no changes needed.
+- **Description modal** — click `ⓘ` for the full description rendered as formatted text: headers, bold, inline code, code blocks, bullet lists, and clickable links. Multi-CVE packages let you switch between vulnerabilities inside the modal.
+- **Unaudited notice** *(JavaScript)* — packages with no published registry versions are excluded from the scan; a banner shows the count with a toggle to browse the full list.
 
-The scanner uses `--disable-pip --no-deps` — checks exact pinned versions against OSV without installing anything (~5 min for 1700+ packages).
+**Python** — scanned with `pip-audit` + OSV inside Docker (`--disable-pip --no-deps`).  
+**JavaScript** — scanned with `osv-scanner` via Docker against a generated `package-lock.json`.
 
 ---
 
@@ -47,62 +51,72 @@ The scanner uses `--disable-pip --no-deps` — checks exact pinned versions agai
 
 ```
 ├── public/data/
-│   ├── catalog.json      package list + versions + index URL (refreshed manually)
-│   └── audit.json        CVE scan results (refreshed manually)
+│   ├── python/
+│   │   ├── catalog.json      Python package list + versions (refreshed manually)
+│   │   └── audit.json        pip-audit CVE results (refreshed manually)
+│   └── javascript/
+│       ├── catalog.json      npm package list + versions (refreshed manually)
+│       └── audit.json        osv-scanner CVE results (refreshed manually)
 ├── src/
-│   ├── components/       Navbar, VersionPill, CvePill, StatCard, DescriptionCell
-│   ├── context/          DataContext — loads + normalizes both JSON files
-│   ├── pages/            CatalogPage, ScanReportPage, PackageDetailPage
-│   └── styles/           CSS variables (tokens.css) + global base styles
-├── scripts/              data pipeline (Python + Docker)
-└── .github/workflows/    CI deploy to GitHub Pages
+│   ├── languages.ts          Language registry (id, label, icon, scanTool, disabled)
+│   ├── hooks/
+│   │   └── useLanguageData.ts  Fetches + caches catalog.json + audit.json per language
+│   ├── components/           Navbar, VersionPill, CvePill, StatCard, DescriptionCell
+│   ├── context/              DataContext (legacy; superseded by useLanguageData)
+│   ├── pages/                CatalogPage, ScanReportPage, PackageDetailPage
+│   └── styles/               CSS variables (tokens.css) + global base styles
+├── scripts/                  Data pipelines (Python + Docker)
+└── .github/workflows/        CI deploy to GitHub Pages
 ```
 
 ---
 
-## Switching to a different customer index
+## Environment setup
 
-Each customer has their own private index with a unique UUID. To point the UI at a different index:
+Copy `.env.example` to `.env` and fill in your values:
 
-1. Edit `.env` — update the three values:
-   ```
-   CATALOG_USER=your_user_here
-   CATALOG_TOKEN=<customer token>
-   CATALOG_INDEX_ID=<customer index UUID>
-   ```
+```
+CATALOG_USER=your_user_here
+CATALOG_TOKEN=<your token>
+CATALOG_INDEX_ID=<python index UUID>
+NPM_ORG_ID=<npm org id>
+NPM_BRIDGE_TOKEN=<npm bridge token>
+```
 
-2. Re-fetch data and re-scan:
-   ```bash
-   cd scripts
-   python3 fetch_data.py    # pulls packages from the new index
-   bash run_scan.sh --all   # re-runs CVE scan against the new package set
-   cd ..
-   ```
-
-3. Push:
-   ```bash
-   git add public/data/
-   git commit -m "chore: switch to <customer name> index"
-   git push                 # GitHub Actions redeploys automatically
-   ```
-
-The index UUID is stored **only** in `.env` (gitignored) and baked into `public/data/catalog.json` at fetch time — no code changes, no rebuild needed.
+`.env` is gitignored — never commit real credentials.
 
 ---
 
-## Refreshing the data (same customer)
+## Refreshing data
+
+### Python
 
 ```bash
 cd scripts
-python3 fetch_data.py         # → ../public/data/catalog.json
-bash run_scan.sh --all        # → ../public/data/audit.json
+python3 fetch_data.py         # → ../public/data/python/catalog.json
+bash run_scan.sh --all        # → ../public/data/python/audit.json
 cd ..
-git add public/data/
-git commit -m "chore: refresh catalog + CVE data"
+git add public/data/python/
+git commit -m "chore: refresh Python catalog + CVE data"
 git push
 ```
 
-Fetch ~5 min (1700+ packages, 30 concurrent requests). Scan ~5 min (OSV lookup, no package installs).
+Fetch ~5 min (1700+ packages, 30 concurrent requests). Scan ~5 min (OSV lookup via Docker, no installs).
+
+### JavaScript
+
+```bash
+# Requires: AWS CLI logged in (aws sso login), Docker running
+cd scripts
+python3 fetch_npm_data.py     # → ../public/data/javascript/catalog.json
+bash run_npm_scan.sh          # → ../public/data/javascript/audit.json
+cd ..
+git add public/data/javascript/
+git commit -m "chore: refresh JavaScript catalog + CVE data"
+git push
+```
+
+Fetch ~10 min (4000+ packages, 30 concurrent requests). Scan uses `ghcr.io/google/osv-scanner` via Docker.
 
 ---
 
@@ -113,21 +127,28 @@ npm install
 npm run dev       # http://localhost:5173/CuratedCatalogUI/
 ```
 
+Navigate to `/python` or `/javascript` (the root redirects to `/python` by default).
+
 ---
 
 ## Scripts (`scripts/`)
 
-| File | Purpose |
-|---|---|
-| `fetch_data.py` | Fetch all packages + versions → `public/data/catalog.json` |
-| `prepare_scan.py` | Build `scan_requirements.txt` (`--all` for full catalog) |
-| `run_scan.sh` | Build Docker image → run pip-audit → `public/data/audit.json` |
-| `Dockerfile` | `python:3.12-slim` + `pip-audit` |
-| `generate_report.py` | Parse `audit.json` → standalone HTML (pre-React fallback) |
+| File | Language | Purpose |
+|---|---|---|
+| `fetch_data.py` | Python | Fetch packages + versions from private PyPI → `public/data/python/catalog.json` |
+| `prepare_scan.py` | Python | Build `scan_requirements.txt` for pip-audit |
+| `run_scan.sh` | Python | Run pip-audit in Docker → `public/data/python/audit.json` |
+| `fetch_npm_data.py` | JavaScript | Fetch package list from S3 + versions from npm registry → `public/data/javascript/catalog.json` |
+| `run_npm_scan.sh` | JavaScript | Run osv-scanner in Docker → `public/data/javascript/audit.json` |
+| `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON into the shared audit.json schema |
+| `Dockerfile` | Python | `python:3.12-slim` + `pip-audit` for Python scanning |
 
 ---
 
-## Known catalog issues
+## Adding a new language
 
-- **11 packages with no files** — listed in the main index but have no artifacts: `boolean-py`, `datetime`, `deepmerge`, `durationpy`, `fasteners`, `funcy`, `humanfriendly`, `pycparser`, `readme-renderer`, `setuptools-scm[toml]`, `websockets`. Show `—` in the versions column.
-- **5 packages skipped by pip-audit** — `intel-numpy`, `intel-scipy`, `pillow-with-lcms`, `scantree`, `swat` (not found on PyPI). Excluded from scan results — neither Clean nor Vulnerable.
+1. Add an entry to `src/languages.ts` (set `disabled: true` until data is ready).
+2. Create `public/data/<lang>/catalog.json` and `audit.json` matching the existing schema.
+3. Add fetch + scan scripts under `scripts/`.
+4. Remove `disabled: true` from the language entry to make it live.
+
