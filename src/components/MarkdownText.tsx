@@ -152,7 +152,7 @@ export function parseMarkdown(raw: string): string {
     // or the end of the first line, whichever comes first. Subsequent lines are body.
     const hm = block.match(/^(#{1,4})\s+/)
     if (hm) {
-      const tag = hm[1].length === 1 ? 'h3' : 'h4'
+      const tag = hm[1].length === 1 ? 'h2' : hm[1].length === 2 ? 'h3' : 'h4'
       const afterHash = block.slice(hm[0].length)
       const lines = afterHash.split('\n')
       const firstLine = lines[0]
