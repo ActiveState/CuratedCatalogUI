@@ -54,7 +54,7 @@
   color: var(--accent);
 }
 
-.langIcon  { font-size: 14px; line-height: 1; }
+.langIcon  { width: 15px; height: 15px; flex-shrink: 0; }
 .langName  { font-family: 'Poppins', sans-serif; }
 
 .chevron {
@@ -112,7 +112,7 @@
   cursor: not-allowed;
 }
 
-.langItemIcon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.langItemIcon { width: 16px; height: 16px; flex-shrink: 0; }
 .langItemLabel { flex: 1; font-family: 'Poppins', sans-serif; }
 
 .check { color: var(--accent); margin-left: auto; flex-shrink: 0; }

@@ -63,7 +63,7 @@ export function Navbar() {
           className={`${styles.langTrigger} ${open ? styles.langTriggerOpen : ''}`}
           onClick={() => setOpen(o => !o)}
         >
-          <span className={styles.langIcon}>{currentLang.icon}</span>
+          <img src={currentLang.icon} alt={currentLang.label} className={styles.langIcon} />
           <span className={styles.langName}>{currentLang.label}</span>
           <svg
             className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
@@ -87,7 +87,7 @@ export function Navbar() {
                 onClick={() => !l.disabled && switchLang(l.id)}
                 title={l.disabled ? `${l.label} — coming soon` : undefined}
               >
-                <span className={styles.langItemIcon}>{l.icon}</span>
+                <img src={l.icon} alt={l.label} className={styles.langItemIcon} />
                 <span className={styles.langItemLabel}>{l.label}</span>
                 {l.id === lang && !l.disabled && (
                   <svg className={styles.check} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
