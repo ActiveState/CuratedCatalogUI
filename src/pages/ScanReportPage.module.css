@@ -39,6 +39,11 @@
 }
 .noticeBtn:hover { background: var(--bg-accent); border-color: var(--accent); }
 
+.noticeOpen {
+  border-radius: 6px 6px 0 0;
+  border-bottom: none;
+}
+
 .unauditedList {
   display: flex;
   flex-wrap: wrap;
@@ -46,9 +51,9 @@
   padding: 14px 16px;
   background: var(--bg-hover);
   border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
   border-top: none;
   border-radius: 0 0 6px 6px;
-  margin-top: -1px;
   max-height: 280px;
   overflow-y: auto;
 }
