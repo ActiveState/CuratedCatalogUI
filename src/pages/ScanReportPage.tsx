@@ -11,10 +11,13 @@ import { VersionPill } from '../components/VersionPill'
 import type { ScannedPackage, Vuln } from '../types'
 import styles from './ScanReportPage.module.css'
 
-type Filter = 'all' | 'vuln' | 'clean'
+type Filter  = 'all' | 'vuln' | 'clean'
+type SortCol = 'pkg' | 'severity'
+
+const SEV_ORDER: Record<string, number> = { CRITICAL: 4, HIGH: 3, MODERATE: 2, LOW: 1 }
 
 type CleanRow = { type: 'clean'; pkg: ScannedPackage; n: number }
-type VulnRow  = { type: 'vuln';  pkg: ScannedPackage; vuln: Vuln; vi: number; n: number }
+type VulnRow  = { type: 'vuln';  pkg: ScannedPackage; vuln: Vuln; vi: number; n: number; pkgVulns: Vuln[] }
 type RowData  = CleanRow | VulnRow
 
 export function ScanReportPage() {
@@ -23,16 +26,36 @@ export function ScanReportPage() {
   const { packages, scanned, loading, error } = useLanguageData(lang)
   const language = getLanguage(lang)
 
-  const [query, setQuery]       = useState('')
-  const [filter, setFilter]     = useState<Filter>('vuln')
+  const [query, setQuery]           = useState('')
+  const [filter, setFilter]         = useState<Filter>('vuln')
   const [showUnaudited, setShowUnaudited] = useState(false)
+  const [sortCol, setSortCol]       = useState<SortCol>('pkg')
+  const [sortDir, setSortDir]       = useState<1 | -1>(1)
 
-  const stats = useMemo(() => ({
-    total: scanned.length,
-    vuln:  scanned.filter(p => p.vulns.length > 0).length,
-    cves:  scanned.reduce((n, p) => n + p.vulns.length, 0),
-    clean: scanned.filter(p => p.vulns.length === 0).length,
-  }), [scanned])
+  function handleSort(col: SortCol) {
+    if (sortCol === col) setSortDir(d => (d === 1 ? -1 : 1))
+    else { setSortCol(col); setSortDir(col === 'severity' ? -1 : 1) }
+  }
+
+  function arrow(col: SortCol) {
+    if (sortCol === col) return <span className={styles.sortActive}>{sortDir === 1 ? '↑' : '↓'}</span>
+    return <span className={styles.sortIdle}>⇅</span>
+  }
+
+  const stats = useMemo(() => {
+    const bySeverity: Record<string, number> = { CRITICAL: 0, HIGH: 0, MODERATE: 0, LOW: 0 }
+    scanned.forEach(p => p.vulns.forEach(v => {
+      const s = v.severity?.toUpperCase()
+      if (s && s in bySeverity) bySeverity[s]++
+    }))
+    return {
+      total: scanned.length,
+      vuln:  scanned.filter(p => p.vulns.length > 0).length,
+      cves:  scanned.reduce((n, p) => n + p.vulns.length, 0),
+      clean: scanned.filter(p => p.vulns.length === 0).length,
+      bySeverity,
+    }
+  }, [scanned])
 
   const flatRows = useMemo((): RowData[] => {
     const q = query.toLowerCase()
@@ -40,19 +63,36 @@ export function ScanReportPage() {
     if (filter === 'vuln')  res = res.filter(p => p.vulns.length > 0)
     if (filter === 'clean') res = res.filter(p => p.vulns.length === 0)
 
+    const maxSev = (p: ScannedPackage) =>
+      p.vulns.reduce((m, v) => Math.max(m, SEV_ORDER[v.severity?.toUpperCase() ?? ''] ?? 0), 0)
+
+    res = [...res].sort((a, b) => {
+      if (sortCol === 'pkg') {
+        const an = a.name.toLowerCase(), bn = b.name.toLowerCase()
+        return an < bn ? -sortDir : an > bn ? sortDir : 0
+      }
+      const diff = maxSev(b) - maxSev(a)
+      return diff !== 0 ? diff * sortDir : 0
+    })
+
     const rows: RowData[] = []
     let n = 0
     res.forEach(pkg => {
       if (pkg.vulns.length === 0) {
         rows.push({ type: 'clean', pkg, n: ++n })
       } else {
-        pkg.vulns.forEach((vuln, vi) => {
-          rows.push({ type: 'vuln', pkg, vuln, vi, n: ++n })
+        const pkgVulns = sortCol === 'severity'
+          ? [...pkg.vulns].sort((a, b) =>
+              ((SEV_ORDER[b.severity?.toUpperCase() ?? ''] ?? 0) -
+               (SEV_ORDER[a.severity?.toUpperCase() ?? ''] ?? 0)) * sortDir)
+          : pkg.vulns
+        pkgVulns.forEach((vuln, vi) => {
+          rows.push({ type: 'vuln', pkg, vuln, vi, n: ++n, pkgVulns })
         })
       }
     })
     return rows
-  }, [scanned, query, filter])
+  }, [scanned, query, filter, sortCol, sortDir])
 
   if (loading) return (
     <div className={styles.loading}><div className={styles.spinner} /><span>Loading scan data…</span></div>
@@ -67,6 +107,19 @@ export function ScanReportPage() {
         <StatCard label="Total CVEs"        value={stats.cves}  variant={stats.cves  > 0 ? 'amber' : 'green'} />
         <StatCard label="Clean"             value={stats.clean} variant="green" />
         <StatCard label="Scanner" value={language.scanTool} />
+        {stats.cves > 0 && (
+          <div className={styles.sevBreakCard}>
+            <div className={styles.sevBreakLabel}>Severity</div>
+            <div className={styles.sevBreakGrid}>
+              {(['CRITICAL', 'HIGH', 'MODERATE', 'LOW'] as const).map(s => (
+                <div key={s} className={styles.sevBreakRow}>
+                  <SeverityPill severity={s} />
+                  <span className={styles.sevBreakCount}>{stats.bySeverity[s]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       {customerId === 'aspov' && packages.length > scanned.length && (() => {
         const scannedNames = new Set(scanned.map(p => p.name))
@@ -145,9 +198,13 @@ export function ScanReportPage() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Package</th>
+                <th className={`sortable${sortCol === 'pkg' ? ' sorted' : ''}`} onClick={() => handleSort('pkg')}>
+                  Package {arrow('pkg')}
+                </th>
                 <th>Version</th>
-                <th>Severity</th>
+                <th className={`sortable${sortCol === 'severity' ? ' sorted' : ''}`} onClick={() => handleSort('severity')}>
+                  Severity {arrow('severity')}
+                </th>
                 <th>Vuln ID</th>
                 <th>CVE Aliases</th>
                 <th>Fix Version</th>
@@ -186,7 +243,7 @@ export function ScanReportPage() {
                       text={row.vuln.description}
                       packageName={row.pkg.name}
                       version={row.pkg.version}
-                      allVulns={row.pkg.vulns}
+                      allVulns={row.pkgVulns}
                       vulnIndex={row.vi}
                     />
                   </td>
