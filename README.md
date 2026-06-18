@@ -10,31 +10,34 @@ Live: **https://activestate.github.io/CuratedCatalogUI/**
 
 The ActiveState Curated Catalog provides private, security-vetted package indexes. This UI gives customers a visual overview of catalog contents and security posture across languages — things that are otherwise invisible when consuming the index via a package manager.
 
-Languages currently live: **Python**, **JavaScript**. Java, Go, Rust, PHP, C#/.NET, R, and C/C++ are shown in the navbar as coming soon.
+The UI is multi-customer. Each customer gets their own package + CVE data at `public/data/<customer>/<lang>/`. The active customer is shown as a pill in the navbar; to enable a full customer switcher, set `CUSTOMER_SWITCHER_ACTIVE = true` in `src/components/Navbar.tsx`.
 
-### Catalog browser (`/:lang`)
+**Currently live:** LDPoV — Python (1730 packages), JavaScript (4387 packages), Java/Maven (5357 packages).
 
-Full package table with inline information — no need to click into individual packages:
+### Catalog browser (`/#/:lang`)
 
-- **Package name** — monospace, truncates gracefully on very long names
-- **Versions** — all version pills in the row, latest highlighted; column is fixed-width so layout is consistent across languages
-- **Vulnerabilities Summary** — CVE alias or vuln ID pill per vulnerability (`CVE-…`, `PYSEC-…`, `GHSA-…`), or a green **Clean** badge if none. Sortable — click to put vulnerable packages first.
-- **View ↗** *(Python only)* — direct link to the package's page in the private PyPI index
+Full package table with inline information:
+
+- **Package name** — monospace, truncates gracefully on long names
+- **Versions** — all version pills, latest highlighted; consistent column width across languages
+- **Vulnerabilities Summary** — CVE alias or vuln ID pill per vulnerability, or a green **Clean** badge. Sortable.
+- **View ↗** *(Python only)* — link to the package's page in the private PyPI index
 
 Live search + sortable columns (name, CVE status).
 
-### CVE scan report (`/:lang/cve-report`)
+### CVE scan report (`/#/:lang/cve-report`)
 
 Opens on the **Vulnerable** filter by default.
 
 - **Stat cards** — packages scanned / vulnerable / total CVEs / clean / scanner tool
 - **Filter** — All / Vulnerable / Clean
 - **Per-row** — version pill, vuln ID, CVE aliases, fix version, truncated description
-- **Description modal** — click `ⓘ` for the full description rendered as formatted text: headers, bold, inline code, code blocks, bullet lists, and clickable links. Multi-CVE packages let you switch between vulnerabilities inside the modal.
-- **Unaudited notice** *(JavaScript)* — packages with no published registry versions are excluded from the scan; a banner shows the count with a toggle to browse the full list.
+- **Description modal** — click `ⓘ` for the full description with formatted text, headers, bold, code, links. Multi-CVE packages let you switch vulnerabilities inside the modal.
+- **Unaudited notice** *(JavaScript)* — packages with no published registry versions are excluded from scan; a banner shows the count with a toggle to browse the list.
 
 **Python** — scanned with `pip-audit` + OSV inside Docker (`--disable-pip --no-deps`).  
-**JavaScript** — scanned with `osv-scanner` via Docker against a generated `package-lock.json`.
+**JavaScript** — scanned with `osv-scanner` via Docker against a generated `package-lock.json`.  
+**Java** — scanned with `osv-scanner` `scan source --no-resolve` via Docker against a generated `pom.xml`.
 
 ---
 
@@ -51,22 +54,31 @@ Opens on the **Vulnerable** filter by default.
 
 ```
 ├── public/data/
-│   ├── python/
-│   │   ├── catalog.json      Python package list + versions (refreshed manually)
-│   │   └── audit.json        pip-audit CVE results (refreshed manually)
-│   └── javascript/
-│       ├── catalog.json      npm package list + versions (refreshed manually)
-│       └── audit.json        osv-scanner CVE results (refreshed manually)
+│   ├── ldpov/                    ← active customer
+│   │   ├── python/
+│   │   │   ├── catalog.json      package list + versions
+│   │   │   └── audit.json        pip-audit CVE results (normalized)
+│   │   ├── javascript/
+│   │   │   ├── catalog.json      npm package list + versions
+│   │   │   └── audit.json        osv-scanner CVE results (normalized)
+│   │   └── java/
+│   │       ├── catalog.json      Maven artifact list + versions
+│   │       └── audit.json        osv-scanner CVE results (normalized)
+│   └── aspov/                    ← disabled (legacy ASPoV data)
+│       ├── python/
+│       └── javascript/
 ├── src/
-│   ├── languages.ts          Language registry (id, label, icon, scanTool, disabled)
+│   ├── customers.ts              customer registry (id, label, languages[], disabled?)
+│   ├── languages.ts              language registry (id, label, icon, scanTool, disabled?)
+│   ├── context/
+│   │   └── CustomerContext.tsx   selected-customer React context (defaults to ldpov)
 │   ├── hooks/
-│   │   └── useLanguageData.ts  Fetches + caches catalog.json + audit.json per language
-│   ├── components/           Navbar, VersionPill, CvePill, StatCard, DescriptionCell
-│   ├── context/              DataContext (legacy; superseded by useLanguageData)
-│   ├── pages/                CatalogPage, ScanReportPage, PackageDetailPage
-│   └── styles/               CSS variables (tokens.css) + global base styles
-├── scripts/                  Data pipelines (Python + Docker)
-└── .github/workflows/        CI deploy to GitHub Pages
+│   │   └── useLanguageData.ts    per-customer/lang data fetch + cache
+│   ├── components/               Navbar, VersionPill, CvePill, StatCard, DescriptionCell
+│   ├── pages/                    CatalogPage, ScanReportPage, PackageDetailPage
+│   └── styles/                   CSS variables (tokens.css) + global base styles
+├── scripts/                      data pipelines (see below)
+└── .github/workflows/            CI deploy to GitHub Pages
 ```
 
 ---
@@ -76,11 +88,15 @@ Opens on the **Vulnerable** filter by default.
 Copy `.env.example` to `.env` and fill in your values:
 
 ```
-CATALOG_USER=your_user_here
-CATALOG_TOKEN=<your token>
-CATALOG_INDEX_ID=<python index UUID>
-NPM_ORG_ID=<npm org id>
-NPM_BRIDGE_TOKEN=<npm bridge token>
+# LDPoV credentials
+LDPOV_USER=<user>
+LDPOV_CATALOG_TOKEN=<token>
+LDPOV_ORG_ID=<org UUID>
+
+# LDPoV registry URLs
+PYPI_URL=<private PyPI index URL>
+NPM_URL=<private npm registry URL>
+MAVEN_URL=<private Maven repo URL>
 ```
 
 `.env` is gitignored — never commit real credentials.
@@ -89,34 +105,42 @@ NPM_BRIDGE_TOKEN=<npm bridge token>
 
 ## Refreshing data
 
-### Python
+Requires: `.env` loaded in your shell, AWS CLI logged in (`aws sso login`), Docker running.
+
+> **Note:** Docker on this machine requires `--network host`. The scan scripts set this automatically.
+
+### LDPoV Python
 
 ```bash
 cd scripts
-python3 fetch_data.py         # → ../public/data/python/catalog.json
-bash run_scan.sh --all        # → ../public/data/python/audit.json
-cd ..
-git add public/data/python/
-git commit -m "chore: refresh Python catalog + CVE data"
-git push
+python3 fetch_ldpov_pypi.py      # → ../public/data/ldpov/python/catalog.json
+bash run_ldpov_pypi_scan.sh      # → ../public/data/ldpov/python/audit.json
 ```
 
-Fetch ~5 min (1700+ packages, 30 concurrent requests). Scan ~5 min (OSV lookup via Docker, no installs).
-
-### JavaScript
+### LDPoV JavaScript
 
 ```bash
-# Requires: AWS CLI logged in (aws sso login), Docker running
 cd scripts
-python3 fetch_npm_data.py     # → ../public/data/javascript/catalog.json
-bash run_npm_scan.sh          # → ../public/data/javascript/audit.json
-cd ..
-git add public/data/javascript/
-git commit -m "chore: refresh JavaScript catalog + CVE data"
-git push
+python3 fetch_ldpov_npm.py       # → ../public/data/ldpov/javascript/catalog.json
+bash run_ldpov_npm_scan.sh       # → ../public/data/ldpov/javascript/audit.json
 ```
 
-Fetch ~10 min (4000+ packages, 30 concurrent requests). Scan uses `ghcr.io/google/osv-scanner` via Docker.
+### LDPoV Java (Maven)
+
+```bash
+cd scripts
+python3 fetch_ldpov_maven.py     # → ../public/data/ldpov/java/catalog.json
+bash run_ldpov_maven_scan.sh     # → ../public/data/ldpov/java/audit.json
+```
+
+### Commit + push
+
+```bash
+cd ..
+git add public/data/ldpov/
+git commit -m "chore: refresh LDPoV catalog + CVE data"
+git push
+```
 
 ---
 
@@ -127,7 +151,7 @@ npm install
 npm run dev       # http://localhost:5173/CuratedCatalogUI/
 ```
 
-Navigate to `/python` or `/javascript` (the root redirects to `/python` by default).
+Navigate to `/#/python`, `/#/javascript`, or `/#/java`. The root redirects to `/#/python`.
 
 ---
 
@@ -135,20 +159,36 @@ Navigate to `/python` or `/javascript` (the root redirects to `/python` by defau
 
 | File | Language | Purpose |
 |---|---|---|
-| `fetch_data.py` | Python | Fetch packages + versions from private PyPI → `public/data/python/catalog.json` |
-| `prepare_scan.py` | Python | Build `scan_requirements.txt` for pip-audit |
-| `run_scan.sh` | Python | Run pip-audit in Docker → `public/data/python/audit.json` |
-| `fetch_npm_data.py` | JavaScript | Fetch package list from S3 + versions from npm registry → `public/data/javascript/catalog.json` |
-| `run_npm_scan.sh` | JavaScript | Run osv-scanner in Docker → `public/data/javascript/audit.json` |
-| `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON into the shared audit.json schema |
+| `fetch_ldpov_pypi.py` | Python | Crawl private PyPI index → `ldpov/python/catalog.json` |
+| `run_ldpov_pypi_scan.sh` | Python | pip-audit in Docker → `ldpov/python/audit.json` |
+| `fetch_ldpov_npm.py` | JavaScript | S3 redirect_map + npm registry → `ldpov/javascript/catalog.json` |
+| `run_ldpov_npm_scan.sh` | JavaScript | osv-scanner in Docker → `ldpov/javascript/audit.json` |
+| `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON → shared audit.json schema (customer-aware via `CUSTOMER`/`LANG_ID` env) |
+| `fetch_ldpov_maven.py` | Java | S3 `repo-type=maven2` redirect_map (`group:artifact:version` keys) → `ldpov/java/catalog.json` |
+| `run_ldpov_maven_scan.sh` | Java | Build `pom.xml` → osv-scanner `scan source --no-resolve` in Docker → raw JSON |
+| `normalize_maven_audit.py` | Java | Normalize osv-scanner v2 JSON → shared audit.json schema |
 | `Dockerfile` | Python | `python:3.12-slim` + `pip-audit` for Python scanning |
 
 ---
 
-## Adding a new language
+## Adding a new customer
 
-1. Add an entry to `src/languages.ts` (set `disabled: true` until data is ready).
-2. Create `public/data/<lang>/catalog.json` and `audit.json` matching the existing schema.
-3. Add fetch + scan scripts under `scripts/`.
-4. Remove `disabled: true` from the language entry to make it live.
+1. Add an entry to `src/customers.ts` with `id`, `label`, `languages[]`, and `disabled: true` initially.
+2. Add credentials to `.env`.
+3. Write `scripts/fetch_<customer>_pypi.py`, `npm`, `maven` as needed (copy from ldpov equivalents).
+4. Run fetches and scans → `public/data/<customer>/`.
+5. Remove `disabled: true` from the customer entry to make it visible.
+6. Set `CUSTOMER_SWITCHER_ACTIVE = true` in `src/components/Navbar.tsx` to enable the dropdown.
 
+---
+
+## Customer switcher
+
+The customer pill in the navbar is currently non-interactive. To enable the full dropdown:
+
+```ts
+// src/components/Navbar.tsx
+const CUSTOMER_SWITCHER_ACTIVE = true   // ← change this
+```
+
+All dropdown logic (state, refs, click-outside detection, language fallback) is already wired up and gated by this constant.

@@ -2,6 +2,11 @@ import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { LANGUAGES, getLanguage } from '../languages'
+import { CUSTOMERS, getCustomer } from '../customers'
+import { useCustomer } from '../context/CustomerContext'
+
+// Set to true to re-enable the customer switcher dropdown
+const CUSTOMER_SWITCHER_ACTIVE = false
 import styles from './Navbar.module.css'
 
 const LOGO = (
@@ -23,32 +28,70 @@ const LOGO = (
   </svg>
 )
 
+const CHEVRON = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+)
+
+const CHECK = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
 export function Navbar() {
   const { theme, toggle } = useTheme()
   const location = useLocation()
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
+  const { customerId, setCustomerId } = useCustomer()
 
-  const pathParts   = location.pathname.split('/')
-  const lang        = pathParts[1] || 'python'
-  const isCveReport = location.pathname.endsWith('/cve-report')
-  const currentLang = getLanguage(lang)
+  const pathParts = location.pathname.split('/')
+  const lang      = pathParts[1] || 'python'
 
-  const [open, setOpen] = useState(false)
-  const dropRef = useRef<HTMLDivElement>(null)
+  const currentCustomer = getCustomer(customerId)
+  const currentLang     = getLanguage(lang)
+
+  // Language is enabled if the current customer lists it
+  const langEnabled = (langId: string) => currentCustomer.languages.includes(langId)
+
+  // ── Customer dropdown ──────────────────────────────────────────────────────
+  const [custOpen, setCustOpen] = useState(false)
+  const custRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function onOutside(e: MouseEvent) {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (custRef.current && !custRef.current.contains(e.target as Node)) setCustOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [])
+
+  function switchCustomer(newCustomerId: string) {
+    const newCustomer = getCustomer(newCustomerId)
+    setCustomerId(newCustomerId)
+    if (!newCustomer.languages.includes(lang)) {
+      const fallback = newCustomer.languages[0] ?? 'python'
+      navigate(location.pathname.endsWith('/cve-report') ? `/${fallback}/cve-report` : `/${fallback}`)
+    }
+    setCustOpen(false)
+  }
+
+  // ── Language dropdown ──────────────────────────────────────────────────────
+  const [langOpen, setLangOpen] = useState(false)
+  const langRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false)
     }
     document.addEventListener('mousedown', onOutside)
     return () => document.removeEventListener('mousedown', onOutside)
   }, [])
 
   function switchLang(newLang: string) {
-    navigate(isCveReport ? `/${newLang}/cve-report` : `/${newLang}`)
-    setOpen(false)
+    navigate(location.pathname.endsWith('/cve-report') ? `/${newLang}/cve-report` : `/${newLang}`)
+    setLangOpen(false)
   }
 
   return (
@@ -57,48 +100,76 @@ export function Navbar() {
       <div className={styles.divider} />
       <span className={styles.title}>Curated Catalog</span>
 
+      {/* Customer selector — pill only when switcher is inactive, full dropdown when active */}
+      {CUSTOMER_SWITCHER_ACTIVE ? (
+        <div className={styles.dropWrap} ref={custRef}>
+          <button
+            className={`${styles.dropTrigger} ${custOpen ? styles.dropTriggerOpen : ''}`}
+            onClick={() => setCustOpen(o => !o)}
+          >
+            <span className={styles.dropName}>{currentCustomer.label}</span>
+            <span className={`${styles.chevron} ${custOpen ? styles.chevronOpen : ''}`}>{CHEVRON}</span>
+          </button>
+          {custOpen && (
+            <div className={styles.dropMenu}>
+              {CUSTOMERS.map(c => (
+                <button
+                  key={c.id}
+                  className={[
+                    styles.dropItem,
+                    c.id === customerId ? styles.dropItemActive   : '',
+                    c.disabled          ? styles.dropItemDisabled : '',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => !c.disabled && switchCustomer(c.id)}
+                >
+                  <span className={styles.dropItemLabel}>{c.label}</span>
+                  {c.id === customerId && !c.disabled && (
+                    <span className={styles.check}>{CHECK}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <span className={styles.customerPill}>{currentCustomer.label}</span>
+      )}
+
       {/* Language dropdown */}
-      <div className={styles.langWrap} ref={dropRef}>
+      <div className={styles.dropWrap} ref={langRef}>
         <button
-          className={`${styles.langTrigger} ${open ? styles.langTriggerOpen : ''}`}
-          onClick={() => setOpen(o => !o)}
+          className={`${styles.dropTrigger} ${langOpen ? styles.dropTriggerOpen : ''}`}
+          onClick={() => setLangOpen(o => !o)}
         >
           <img src={currentLang.icon} alt={currentLang.label} className={styles.langIcon} />
-          <span className={styles.langName}>{currentLang.label}</span>
-          <svg
-            className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
-            width="12" height="12" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2.5"
-          >
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
+          <span className={styles.dropName}>{currentLang.label}</span>
+          <span className={`${styles.chevron} ${langOpen ? styles.chevronOpen : ''}`}>{CHEVRON}</span>
         </button>
 
-        {open && (
-          <div className={styles.langMenu}>
-            {LANGUAGES.map(l => (
-              <button
-                key={l.id}
-                className={[
-                  styles.langItem,
-                  l.id === lang      ? styles.langItemActive    : '',
-                  l.disabled         ? styles.langItemDisabled  : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => !l.disabled && switchLang(l.id)}
-                title={l.disabled ? `${l.label} — coming soon` : undefined}
-              >
-                <img src={l.icon} alt={l.label} className={styles.langItemIcon} />
-                <span className={styles.langItemLabel}>{l.label}</span>
-                {l.id === lang && !l.disabled && (
-                  <svg className={styles.check} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-                {l.disabled && (
-                  <span className={styles.soon}>soon</span>
-                )}
-              </button>
-            ))}
+        {langOpen && (
+          <div className={styles.dropMenu}>
+            {LANGUAGES.map(l => {
+              const enabled = langEnabled(l.id)
+              return (
+                <button
+                  key={l.id}
+                  className={[
+                    styles.dropItem,
+                    l.id === lang ? styles.dropItemActive    : '',
+                    !enabled      ? styles.dropItemDisabled  : '',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => enabled && switchLang(l.id)}
+                  title={!enabled ? `${l.label} — coming soon` : undefined}
+                >
+                  <img src={l.icon} alt={l.label} className={styles.langItemIcon} />
+                  <span className={styles.dropItemLabel}>{l.label}</span>
+                  {l.id === lang && enabled && (
+                    <span className={styles.check}>{CHECK}</span>
+                  )}
+                  {!enabled && <span className={styles.soon}>soon</span>}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>

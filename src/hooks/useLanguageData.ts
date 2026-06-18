@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Package, ScannedPackage } from '../types'
+import { useCustomer } from '../context/CustomerContext'
 
 export interface LanguageData {
   packages: Package[]
@@ -12,22 +13,25 @@ export interface LanguageData {
 
 const EMPTY: LanguageData = { packages: [], scanned: [], generated: '', indexUrl: '', loading: true, error: null }
 
-// Module-level cache: avoid re-fetching when navigating between pages in the same language
+// Module-level cache keyed by "customerId/lang"
 const cache = new Map<string, LanguageData>()
 
 export function useLanguageData(lang: string): LanguageData {
-  const [data, setData] = useState<LanguageData>(() => cache.get(lang) ?? EMPTY)
+  const { customerId } = useCustomer()
+  const cacheKey = `${customerId}/${lang}`
+
+  const [data, setData] = useState<LanguageData>(() => cache.get(cacheKey) ?? EMPTY)
 
   useEffect(() => {
-    if (cache.has(lang)) {
-      setData(cache.get(lang)!)
+    if (cache.has(cacheKey)) {
+      setData(cache.get(cacheKey)!)
       return
     }
     setData(EMPTY)
     const base = import.meta.env.BASE_URL
     Promise.all([
-      fetch(`${base}data/${lang}/catalog.json`).then(r => r.json()),
-      fetch(`${base}data/${lang}/audit.json`).then(r => r.json()),
+      fetch(`${base}data/${customerId}/${lang}/catalog.json`).then(r => r.json()),
+      fetch(`${base}data/${customerId}/${lang}/audit.json`).then(r => r.json()),
     ])
       .then(([catalog, audit]) => {
         const packages: Package[] = catalog.packages ?? catalog
@@ -49,14 +53,14 @@ export function useLanguageData(lang: string): LanguageData {
           }))
 
         const result: LanguageData = { packages, scanned, generated, indexUrl, loading: false, error: null }
-        cache.set(lang, result)
+        cache.set(cacheKey, result)
         setData(result)
       })
       .catch(err => {
         const result: LanguageData = { packages: [], scanned: [], generated: '', indexUrl: '', loading: false, error: err.message }
         setData(result)
       })
-  }, [lang])
+  }, [customerId, lang, cacheKey])
 
   return data
 }

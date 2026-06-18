@@ -12,10 +12,14 @@ Writes:
 import json
 import os
 
-DIR       = os.path.dirname(__file__)
-OSV_RAW   = os.path.join(DIR, "results", "npm", "osv_raw.json")
-CATALOG   = os.path.join(DIR, "..", "public", "data", "javascript", "catalog.json")
-OUT_PATH  = os.path.join(DIR, "..", "public", "data", "javascript", "audit.json")
+DIR      = os.path.dirname(__file__)
+CUSTOMER = os.environ.get("CUSTOMER", "aspov")
+LANG     = os.environ.get("LANG_ID",  os.environ.get("LANG", "javascript"))
+
+_results_subdir = "npm" if CUSTOMER == "aspov" else f"{CUSTOMER}-npm"
+OSV_RAW  = os.path.join(DIR, "results", _results_subdir, "osv_raw.json")
+CATALOG  = os.path.join(DIR, "..", "public", "data", CUSTOMER, LANG, "catalog.json")
+OUT_PATH = os.path.join(DIR, "..", "public", "data", CUSTOMER, LANG, "audit.json")
 
 
 def extract_fix_versions(vuln: dict) -> list[str]:
@@ -93,7 +97,7 @@ def main() -> None:
     total_vuln = sum(1 for d in dependencies if d["vulns"])
     total_cves = sum(len(d["vulns"]) for d in dependencies)
     print(
-        f"Wrote public/data/javascript/audit.json — "
+        f"Wrote public/data/{CUSTOMER}/{LANG}/audit.json — "
         f"{len(dependencies)} packages, {total_vuln} vulnerable, {total_cves} findings"
     )
 
