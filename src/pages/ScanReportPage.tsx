@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLanguageData } from '../hooks/useLanguageData'
+import { useCustomer } from '../context/CustomerContext'
 import { getLanguage } from '../languages'
 import { CvePill } from '../components/CvePill'
 import { StatCard } from '../components/StatCard'
@@ -17,6 +18,7 @@ type RowData  = CleanRow | VulnRow
 
 export function ScanReportPage() {
   const { lang = 'python' } = useParams<{ lang: string }>()
+  const { customerId } = useCustomer()
   const { packages, scanned, loading, error } = useLanguageData(lang)
   const language = getLanguage(lang)
 
@@ -65,7 +67,7 @@ export function ScanReportPage() {
         <StatCard label="Clean"             value={stats.clean} variant="green" />
         <StatCard label="Scanner" value={language.scanTool} />
       </div>
-      {packages.length > scanned.length && (() => {
+      {customerId === 'aspov' && packages.length > scanned.length && (() => {
         const scannedNames = new Set(scanned.map(p => p.name))
         const unaudited = packages.filter(p => !scannedNames.has(p.name))
         return (
