@@ -27,14 +27,17 @@
 
 /* ── Customer label pill (non-interactive) ──────────────────────────────── */
 .customerPill {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-size: 13px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
-  color: var(--accent);
-  background: var(--bg-accent);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  padding: 3px 10px;
   white-space: nowrap;
   flex-shrink: 0;
   user-select: none;
