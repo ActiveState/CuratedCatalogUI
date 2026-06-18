@@ -10,6 +10,7 @@ import datetime
 import json
 import os
 import re
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
@@ -68,20 +69,39 @@ def fetch_versions(pkg_name: str) -> tuple[str, list[str]]:
         return pkg_name, []
 
 
+def get_package_list_from_s3(org_id: str) -> list[str]:
+    s3_path = f"s3://curated-catalog/env=prod/org-id={org_id}/repo-type=pypi/"
+    print(f"Fetching PyPI package list from S3: {s3_path}", flush=True)
+    result = subprocess.run(
+        ["aws", "s3", "ls", s3_path],
+        capture_output=True, text=True, check=True,
+    )
+    packages = []
+    for line in result.stdout.splitlines():
+        # Lines look like: "                           PRE numpy/"
+        parts = line.strip().split()
+        if len(parts) == 2 and parts[0] == "PRE":
+            packages.append(parts[1].rstrip("/"))
+    return sorted(packages, key=str.lower)
+
+
 def main() -> None:
-    print("Fetching LDPoV PyPI package list...", flush=True)
-    html = get(BASE_URL)
-    packages = [m.rstrip("/") for m in HREF_RE.findall(html) if m.endswith("/")]
+    org_id = os.environ.get("LDPOV_ORG_ID", _env.get("LDPOV_ORG_ID", ""))
+    if not org_id:
+        raise SystemExit("ERROR: set LDPOV_ORG_ID in .env or environment")
+
+    packages = get_package_list_from_s3(org_id)
     total = len(packages)
-    print(f"Found {total} packages. Fetching versions with 30 workers...", flush=True)
+    print(f"Found {total} packages. Fetching versions with 10 workers...", flush=True)
 
     results: list[dict] = []
     done = 0
-    with ThreadPoolExecutor(max_workers=30) as pool:
+    with ThreadPoolExecutor(max_workers=10) as pool:
         futures = {pool.submit(fetch_versions, pkg): pkg for pkg in packages}
         for future in as_completed(futures):
             name, versions = future.result()
-            results.append({"name": name, "versions": versions})
+            if versions:
+                results.append({"name": name, "versions": versions})
             done += 1
             if done % 100 == 0 or done == total:
                 print(f"  {done}/{total}", flush=True)
@@ -101,7 +121,7 @@ def main() -> None:
     with open(out_path, "w") as f:
         json.dump(out, f, separators=(",", ":"))
 
-    print(f"Wrote public/data/ldpov/python/catalog.json — {total} packages")
+    print(f"Wrote public/data/ldpov/python/catalog.json — {len(results)} packages ({total - len(results)} skipped, no versions)")
 
 
 if __name__ == "__main__":
