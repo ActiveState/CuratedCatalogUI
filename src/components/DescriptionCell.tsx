@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { VersionPill } from './VersionPill'
 import { CvePill } from './CvePill'
+import { SeverityPill } from './SeverityPill'
 import { MarkdownText } from './MarkdownText'
 import type { Vuln } from '../types'
 import styles from './DescriptionCell.module.css'
@@ -103,9 +104,10 @@ export function DescriptionCell({ text, packageName, version, allVulns, vulnInde
                     </div>
                   )}
 
-                  {/* CVE aliases for active vuln */}
-                  {current && current.cves.length > 0 && (
+                  {/* severity + CVE aliases for active vuln */}
+                  {current && (current.severity || current.cves.length > 0) && (
                     <div className={styles.metaRow}>
+                      {current.severity && <SeverityPill severity={current.severity} />}
                       {current.cves.map(c => <CvePill key={c} id={c} />)}
                     </div>
                   )}
