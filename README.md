@@ -12,7 +12,7 @@ The ActiveState Curated Catalog provides private, security-vetted package indexe
 
 The UI is multi-customer. Each customer gets their own package + CVE data at `public/data/<customer>/<lang>/`. The active customer is shown as a pill in the navbar; to enable a full customer switcher, set `CUSTOMER_SWITCHER_ACTIVE = true` in `src/components/Navbar.tsx`.
 
-**Currently live:** LDPoV — Python (1730 packages), JavaScript (753 packages), Java/Maven (5357 packages).
+**Currently live:** LDPoV — Python (1726 packages), JavaScript (4387 packages), Java/Maven (5357 packages).
 
 ### Catalog browser (`/#/:lang`)
 
@@ -110,6 +110,17 @@ Requires: `.env` loaded in your shell, AWS CLI logged in (`aws sso login`), Dock
 
 > **Note:** Docker on this machine requires `--network host`. The scan scripts set this automatically.
 
+### Rules — read before running anything
+
+1. **Always run the fetch script before the scan script.** Never reuse a stale `catalog.json` from a previous session. The scan uses whatever packages are in `catalog.json` at the time it runs — if that file is old, the scan results are wrong.
+
+2. **All fetch scripts use S3 redirect_map only.** Package names and versions are parsed directly from tarball/wheel/sdist filenames in the redirect_map keys. No registry API calls are made. Do not add registry calls — they cause rate-limiting (silent HTTP 403/404) that makes packages disappear without any error.
+   - npm key format: `{name}/-/{short_name}-{version}.tgz`
+   - PyPI key format: `{sha256}/{filename}` where filename is `.whl` or `.tar.gz`
+   - Maven key format: `group:artifact:version` triples
+
+3. **Switching to a different org or customer:** change `LDPOV_ORG_ID` (or the equivalent `*_ORG_ID`) in `.env`, then re-run all three fetch scripts and all three scan scripts. Old data files for a different org must never be committed alongside new ones.
+
 ### LDPoV Python
 
 ```bash
@@ -160,9 +171,9 @@ Navigate to `/#/python`, `/#/javascript`, or `/#/java`. The root redirects to `/
 
 | File | Language | Purpose |
 |---|---|---|
-| `fetch_ldpov_pypi.py` | Python | Crawl private PyPI index → `ldpov/python/catalog.json` |
+| `fetch_ldpov_pypi.py` | Python | S3 redirect_map → parse whl/sdist filenames → `ldpov/python/catalog.json` |
 | `run_ldpov_pypi_scan.sh` | Python | pip-audit in Docker → `ldpov/python/audit.json` |
-| `fetch_ldpov_npm.py` | JavaScript | S3 redirect_map + npm registry → `ldpov/javascript/catalog.json` |
+| `fetch_ldpov_npm.py` | JavaScript | S3 redirect_map → parse tarball keys → `ldpov/javascript/catalog.json` |
 | `run_ldpov_npm_scan.sh` | JavaScript | osv-scanner in Docker → `ldpov/javascript/audit.json` |
 | `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON → shared audit.json schema; extracts severity from `database_specific.severity` |
 | `fetch_ldpov_maven.py` | Java | S3 `repo-type=maven2` redirect_map (`group:artifact:version` keys) → `ldpov/java/catalog.json` |
