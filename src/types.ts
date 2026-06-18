@@ -13,6 +13,7 @@ export interface Vuln {
   cves: string[]
   fix: string[]
   description: string
+  severity: string | null
 }
 
 export interface ScannedPackage {

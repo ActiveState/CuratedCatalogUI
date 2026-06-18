@@ -70,11 +70,14 @@ def main() -> None:
                             if "fixed" in event:
                                 fix_versions.append(event["fixed"])
 
+                severity = (vuln.get("database_specific") or {}).get("severity") or None
+
                 vuln_map[key].append({
                     "id":           vid,
                     "aliases":      aliases,
                     "fix_versions": sorted(set(fix_versions)),
                     "description":  desc,
+                    "severity":     severity,
                 })
 
     # Emit one entry per catalog package (latest version), overlaying vulns

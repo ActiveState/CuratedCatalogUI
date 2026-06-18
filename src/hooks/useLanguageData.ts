@@ -49,6 +49,7 @@ export function useLanguageData(lang: string): LanguageData {
               cves:        (v.aliases ?? v.cves ?? []).filter((a: string) => a.startsWith('CVE-')),
               fix:         v.fix_versions ?? v.fix ?? [],
               description: v.description ?? '',
+              severity:    v.severity ?? null,
             })),
           }))
 

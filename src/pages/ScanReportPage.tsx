@@ -4,6 +4,7 @@ import { useLanguageData } from '../hooks/useLanguageData'
 import { useCustomer } from '../context/CustomerContext'
 import { getLanguage } from '../languages'
 import { CvePill } from '../components/CvePill'
+import { SeverityPill } from '../components/SeverityPill'
 import { StatCard } from '../components/StatCard'
 import { DescriptionCell } from '../components/DescriptionCell'
 import { VersionPill } from '../components/VersionPill'
@@ -146,7 +147,7 @@ export function ScanReportPage() {
                 <th>#</th>
                 <th>Package</th>
                 <th>Version</th>
-                <th>Status</th>
+                <th>Severity</th>
                 <th>Vuln ID</th>
                 <th>CVE Aliases</th>
                 <th>Fix Version</th>
@@ -168,7 +169,7 @@ export function ScanReportPage() {
                   <td className={styles.idx}>{row.n}</td>
                   <td className={styles.pkgName}>{row.vi === 0 ? row.pkg.name : ''}</td>
                   <td>{row.vi === 0 ? <VersionPill version={row.pkg.version} latest /> : ''}</td>
-                  <td>{row.vi === 0 ? <span className={styles.statusVuln}>Vulnerable</span> : ''}</td>
+                  <td><SeverityPill severity={row.vuln.severity} /></td>
                   <td className={styles.vulnId}>{row.vuln.id}</td>
                   <td className={styles.cveCol}>
                     {row.vuln.cves.length > 0

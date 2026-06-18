@@ -84,7 +84,8 @@ def main() -> None:
         futures = {pool.submit(fetch_versions, n): n for n in names}
         for future in as_completed(futures):
             name, versions = future.result()
-            results.append({"name": name, "versions": versions})
+            if versions:
+                results.append({"name": name, "versions": versions})
             done += 1
             if done % 500 == 0 or done == total:
                 print(f"  {done}/{total}", flush=True)
@@ -103,7 +104,7 @@ def main() -> None:
     with open(out_path, "w") as f:
         json.dump(out, f, separators=(",", ":"))
 
-    print(f"Wrote public/data/ldpov/javascript/catalog.json — {total} packages")
+    print(f"Wrote public/data/ldpov/javascript/catalog.json — {len(results)} packages ({total - len(results)} skipped, no versions)")
 
 
 if __name__ == "__main__":

@@ -70,15 +70,17 @@ def main() -> None:
                         continue
                     seen.add(key)
 
-                    aliases     = vuln.get("aliases", [])
-                    description = vuln.get("details", "") or vuln.get("summary", "")
+                    aliases      = vuln.get("aliases", [])
+                    description  = vuln.get("details", "") or vuln.get("summary", "")
                     fix_versions = extract_fix_versions(vuln)
+                    severity     = (vuln.get("database_specific") or {}).get("severity") or None
 
                     vuln_map.setdefault(name, []).append({
-                        "id":          vuln_id,
-                        "aliases":     aliases,
+                        "id":           vuln_id,
+                        "aliases":      aliases,
                         "fix_versions": fix_versions,
-                        "description": description,
+                        "description":  description,
+                        "severity":     severity,
                     })
 
     # Build dependencies list: every scanned package, clean or vulnerable
