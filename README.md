@@ -12,7 +12,7 @@ The ActiveState Curated Catalog provides private, security-vetted package indexe
 
 The UI is multi-customer. Each customer gets their own package + CVE data at `public/data/<customer>/<lang>/`. The active customer is shown as a pill in the navbar; to enable a full customer switcher, set `CUSTOMER_SWITCHER_ACTIVE = true` in `src/components/Navbar.tsx`.
 
-**Currently live:** LDPoV — Python (1730 packages), JavaScript (4387 packages), Java/Maven (5357 packages).
+**Currently live:** LDPoV — Python (1730 packages), JavaScript (753 packages), Java/Maven (5357 packages).
 
 ### Catalog browser (`/#/:lang`)
 
@@ -29,11 +29,12 @@ Live search + sortable columns (name, CVE status).
 
 Opens on the **Vulnerable** filter by default.
 
-- **Stat cards** — packages scanned / vulnerable / total CVEs / clean / scanner tool
+- **Stat cards** — packages scanned / vulnerable / total CVEs / clean / scanner tool; **Severity breakdown** card (Critical / High / Moderate / Low counts) when CVEs are present
 - **Filter** — All / Vulnerable / Clean
-- **Per-row** — version pill, vuln ID, CVE aliases, fix version, truncated description
-- **Description modal** — click `ⓘ` for the full description with formatted text, headers, bold, code, links. Multi-CVE packages let you switch vulnerabilities inside the modal.
-- **Unaudited notice** *(JavaScript)* — packages with no published registry versions are excluded from scan; a banner shows the count with a toggle to browse the list.
+- **Sortable columns** — Package (A–Z / Z–A) and Severity (worst-first / best-first); severity sort also orders vulns within each package worst-first
+- **Per-row** — version pill, severity pill (Critical/High/Moderate/Low), vuln ID, CVE aliases, fix version, truncated description
+- **Description modal** — click `ⓘ` for the full description with formatted text, headers, bold, code, links. Modal header shows severity pill + CVE aliases. Multi-CVE packages let you switch vulnerabilities inside the modal.
+- **Unaudited notice** *(ASPoV internal only)* — packages with no published registry versions are excluded from scan; a banner shows the count with a toggle to browse the list. Hidden for customer-facing views.
 
 **Python** — scanned with `pip-audit` + OSV inside Docker (`--disable-pip --no-deps`).  
 **JavaScript** — scanned with `osv-scanner` via Docker against a generated `package-lock.json`.  
@@ -163,10 +164,10 @@ Navigate to `/#/python`, `/#/javascript`, or `/#/java`. The root redirects to `/
 | `run_ldpov_pypi_scan.sh` | Python | pip-audit in Docker → `ldpov/python/audit.json` |
 | `fetch_ldpov_npm.py` | JavaScript | S3 redirect_map + npm registry → `ldpov/javascript/catalog.json` |
 | `run_ldpov_npm_scan.sh` | JavaScript | osv-scanner in Docker → `ldpov/javascript/audit.json` |
-| `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON → shared audit.json schema (customer-aware via `CUSTOMER`/`LANG_ID` env) |
+| `normalize_npm_audit.py` | JavaScript | Normalize osv-scanner JSON → shared audit.json schema; extracts severity from `database_specific.severity` |
 | `fetch_ldpov_maven.py` | Java | S3 `repo-type=maven2` redirect_map (`group:artifact:version` keys) → `ldpov/java/catalog.json` |
 | `run_ldpov_maven_scan.sh` | Java | Build `pom.xml` → osv-scanner `scan source --no-resolve` in Docker → raw JSON |
-| `normalize_maven_audit.py` | Java | Normalize osv-scanner v2 JSON → shared audit.json schema |
+| `normalize_maven_audit.py` | Java | Normalize osv-scanner v2 JSON → shared audit.json schema; includes all catalog packages; extracts severity |
 | `Dockerfile` | Python | `python:3.12-slim` + `pip-audit` for Python scanning |
 
 ---
