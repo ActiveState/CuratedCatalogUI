@@ -81,4 +81,8 @@ mkdir -p "$DIR/../public/data/ldpov/python"
 cp "${RESULTS}/audit.json" "$DIR/../public/data/ldpov/python/audit.json"
 
 echo ""
+echo "==> [post] Enriching severity from OSV API..."
+python3 "$DIR/enrich_python_severity.py"
+
+echo ""
 echo "Done. public/data/ldpov/python/audit.json updated."
