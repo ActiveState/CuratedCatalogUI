@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """Fetch all package names + versions from the LDPoV PyPI catalog.
 
-Reads LDPOV_USER, LDPOV_CATALOG_TOKEN, PYPI_URL from ../.env or environment.
+Reads LDPOV_ORG_ID from ../.env or environment.
+Fetches the redirect_map from S3 and extracts package names + versions
+directly from the wheel/sdist filenames — no registry calls needed.
 Writes public/data/ldpov/python/catalog.json.
 """
 
-import base64
 import datetime
 import json
 import os
 import re
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urljoin
-from urllib.request import Request, urlopen
+import urllib.parse
+from collections import defaultdict
 
 _env: dict[str, str] = {}
 _env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
@@ -24,94 +24,64 @@ if os.path.exists(_env_path):
             k, v = line.split("=", 1)
             _env[k.strip()] = v.strip()
 
-USER     = os.environ.get("LDPOV_USER",           _env.get("LDPOV_USER",           ""))
-PASSWORD = os.environ.get("LDPOV_CATALOG_TOKEN",  _env.get("LDPOV_CATALOG_TOKEN",  ""))
-BASE_URL = os.environ.get("PYPI_URL",             _env.get("PYPI_URL",             ""))
+ORG_ID = os.environ.get("LDPOV_ORG_ID", _env.get("LDPOV_ORG_ID", ""))
 
-if not USER or not PASSWORD:
-    raise SystemExit("ERROR: set LDPOV_USER and LDPOV_CATALOG_TOKEN in .env or environment")
-if not BASE_URL:
-    raise SystemExit("ERROR: set PYPI_URL in .env or environment")
+if not ORG_ID:
+    raise SystemExit("ERROR: set LDPOV_ORG_ID in .env or environment")
 
-AUTH = base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode()
-
-HREF_RE = re.compile(r'href="([^"]+)"')
-WHL_VERSION_RE = re.compile(r'^[^-]+-([^-]+)-')
+# wheel filename: {distribution}-{version}(-{build})?-{python}-{abi}-{platform}.whl
+_WHL_RE = re.compile(r'^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)-(\d[^-]*)(-.*)?\.whl$')
+# sdist filename: {distribution}-{version}.tar.gz or .zip
+_SDIST_RE = re.compile(r'^(.+?)-(\d[\w.\-+]*)\.(?:tar\.gz|zip)$')
 
 
-def get(url: str) -> str:
-    req = Request(url, headers={"Authorization": f"Basic {AUTH}"})
-    with urlopen(req, timeout=30) as r:
-        return r.read().decode("utf-8")
+def _normalize(name: str) -> str:
+    return re.sub(r'[-_.]+', '-', name).lower()
 
 
-def fetch_versions(pkg_name: str) -> tuple[str, list[str]]:
-    url = urljoin(BASE_URL, f"{pkg_name}/")
-    try:
-        html = get(url)
-        versions: set[str] = set()
-        for href in HREF_RE.findall(html):
-            filename = href.split("/")[-1].split("#")[0]
-            if filename.endswith(".whl"):
-                m = WHL_VERSION_RE.match(filename)
-                if m:
-                    versions.add(m.group(1))
-            elif filename.endswith(".tar.gz") or filename.endswith(".zip"):
-                stem = filename.replace(".tar.gz", "").replace(".zip", "")
-                parts = stem.rsplit("-", 1)
-                if len(parts) == 2:
-                    versions.add(parts[1])
-        return pkg_name, sorted(
-            versions,
-            key=lambda v: [int(x) if x.isdigit() else x for x in re.split(r'[.\-]', v)],
-        )
-    except Exception:
-        return pkg_name, []
-
-
-def get_package_list_from_s3(org_id: str) -> list[str]:
-    s3_path = f"s3://curated-catalog/env=prod/org-id={org_id}/repo-type=pypi/"
-    print(f"Fetching PyPI package list from S3: {s3_path}", flush=True)
-    result = subprocess.run(
-        ["aws", "s3", "ls", s3_path],
-        capture_output=True, text=True, check=True,
-    )
-    packages = []
-    for line in result.stdout.splitlines():
-        # Lines look like: "                           PRE numpy/"
-        parts = line.strip().split()
-        if len(parts) == 2 and parts[0] == "PRE":
-            packages.append(parts[1].rstrip("/"))
-    return sorted(packages, key=str.lower)
+def _version_key(v: str) -> list:
+    return [int(x) if x.isdigit() else x for x in re.split(r'[.\-]', v.split('+')[0])]
 
 
 def main() -> None:
-    org_id = os.environ.get("LDPOV_ORG_ID", _env.get("LDPOV_ORG_ID", ""))
-    if not org_id:
-        raise SystemExit("ERROR: set LDPOV_ORG_ID in .env or environment")
+    s3_path = f"s3://curated-catalog/env=prod/org-id={ORG_ID}/repo-type=pypi/redirect_map.json"
+    print(f"Fetching PyPI redirect_map from S3: {s3_path}", flush=True)
+    result = subprocess.run(
+        ["aws", "s3", "cp", s3_path, "-"],
+        capture_output=True, text=True, check=True,
+    )
+    data = json.loads(result.stdout)
+    print(f"Found {len(data)} redirect entries", flush=True)
 
-    packages = get_package_list_from_s3(org_id)
-    total = len(packages)
-    print(f"Found {total} packages. Fetching versions with 10 workers...", flush=True)
+    pkg_versions: dict[str, set[str]] = defaultdict(set)
+    for raw_key in data:
+        # keys are: {sha256_hash}/{filename}
+        parts = raw_key.split('/', 1)
+        if len(parts) != 2:
+            continue
+        filename = urllib.parse.unquote(parts[1])
 
-    results: list[dict] = []
-    done = 0
-    with ThreadPoolExecutor(max_workers=10) as pool:
-        futures = {pool.submit(fetch_versions, pkg): pkg for pkg in packages}
-        for future in as_completed(futures):
-            name, versions = future.result()
-            if versions:
-                results.append({"name": name, "versions": versions})
-            done += 1
-            if done % 100 == 0 or done == total:
-                print(f"  {done}/{total}", flush=True)
+        m = _WHL_RE.match(filename)
+        if m:
+            dist    = _normalize(m.group(1))
+            version = m.group(3)
+            pkg_versions[dist].add(version)
+            continue
 
-    results.sort(key=lambda x: x["name"].lower())
+        m = _SDIST_RE.match(filename)
+        if m:
+            dist    = _normalize(m.group(1))
+            version = m.group(2)
+            pkg_versions[dist].add(version)
+
+    packages = [
+        {"name": name, "versions": sorted(versions, key=_version_key)}
+        for name, versions in sorted(pkg_versions.items(), key=lambda x: x[0].lower())
+    ]
 
     out = {
         "generated": datetime.datetime.utcnow().isoformat() + "Z",
-        "index_url": BASE_URL,
-        "packages":  results,
+        "packages":  packages,
     }
 
     out_path = os.path.join(
@@ -121,7 +91,7 @@ def main() -> None:
     with open(out_path, "w") as f:
         json.dump(out, f, separators=(",", ":"))
 
-    print(f"Wrote public/data/ldpov/python/catalog.json — {len(results)} packages ({total - len(results)} skipped, no versions)")
+    print(f"Wrote public/data/ldpov/python/catalog.json — {len(packages)} packages")
 
 
 if __name__ == "__main__":
