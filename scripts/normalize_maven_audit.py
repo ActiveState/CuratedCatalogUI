@@ -61,7 +61,7 @@ def main() -> None:
             for vuln in pkg.get("vulnerabilities", []):
                 vid     = vuln.get("id", "")
                 aliases = [a for a in vuln.get("aliases", []) if a.startswith("CVE-")]
-                desc    = vuln.get("summary", vuln.get("details", ""))
+                desc    = vuln.get("details", "") or vuln.get("summary", "")
 
                 fix_versions: list[str] = []
                 for affected in vuln.get("affected", []):
