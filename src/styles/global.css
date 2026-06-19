@@ -7,7 +7,10 @@ body {
   min-height: 100vh;
   font-size: 14px;
   transition: background 0.2s, color 0.2s;
+  caret-color: transparent;
 }
+
+input, textarea { caret-color: auto; }
 
 a { color: inherit; text-decoration: none; }
 
