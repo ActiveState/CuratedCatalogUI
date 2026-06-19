@@ -68,6 +68,9 @@ export function CatalogPage() {
             onChange={e => setQuery(e.target.value)}
             autoComplete="off"
           />
+          {query && (
+            <button className={styles.clearBtn} onClick={() => setQuery('')} aria-label="Clear search">×</button>
+          )}
         </div>
         <p className="count-label">
           Showing <b>{filtered.length.toLocaleString()}</b> of <b>{packages.length.toLocaleString()}</b> packages
