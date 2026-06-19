@@ -162,6 +162,9 @@ export function ScanReportPage() {
             onChange={e => setQuery(e.target.value)}
             autoComplete="off"
           />
+          {query && (
+            <button className={styles.clearBtn} onClick={() => setQuery('')} aria-label="Clear search">×</button>
+          )}
         </div>
         <div className={styles.filterBtns}>
           {(['all', 'vuln', 'clean'] as Filter[]).map(f => (
