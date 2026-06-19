@@ -3,7 +3,13 @@
   gap: 16px;
   padding-top: 20px;
   flex-wrap: wrap;
+  align-items: stretch;
 }
+
+.stats > * { flex: 1 1 auto; }
+
+.scannerCard { flex: 1.5 1 auto; }
+.scannerCard > * { height: 100%; }
 
 .notice {
   display: flex;
@@ -146,7 +152,10 @@
 .statusOk   { display: inline-block; background: var(--status-ok-bg); border: 1px solid var(--status-ok-bd); color: var(--status-ok-tx); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
 .statusVuln { display: inline-block; background: var(--status-vl-bg); border: 1px solid var(--status-vl-bd); color: var(--status-vl-tx); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
 
-.tableScroll { overflow-x: auto; }
+/* ── Split thead / tbody containers ─────────────────── */
+.tableHead { padding-right: 6px; background: var(--bg-page); }
+.tableHead table { table-layout: fixed; width: 100%; }
+.tableScroll { overflow: auto; max-height: calc(100vh - 327px); border-radius: 0 0 9px 9px; scrollbar-gutter: stable; }
 .tableScroll table { table-layout: fixed; width: 100%; }
 .tableScroll td, .tableScroll th { overflow: hidden; text-overflow: ellipsis; }
 
@@ -172,42 +181,66 @@
 }
 
 .sevBreakCard {
+  display: flex;
+  flex-direction: column;
+  flex: 2 1 0;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 16px 20px;
+  padding: 16px 12px;
   box-shadow: var(--shadow-sm);
   transition: background 0.2s, border-color 0.2s;
-  min-width: 200px;
+  min-width: 260px;
 }
 
-.sevBreakLabel {
+.sevBreakTitle {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.sevBreakGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px 20px;
-}
-
-.sevBreakRow {
+.sevTiles {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: 1;
+  align-items: stretch;
 }
 
-.sevBreakCount {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  min-width: 18px;
+.sevTile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px 6px;
+  border-radius: 6px;
 }
+
+.sevTileNum {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sevTileLabel {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.sevTile.critical { background: var(--status-vl-bg); color: var(--status-vl-tx); }
+.sevTile.high     { background: #fff7ed; color: #c2410c; }
+.sevTile.moderate { background: var(--cve-bg); color: var(--cve-text); }
+.sevTile.low      { background: #eff6ff; color: #1d4ed8; }
+
+[data-theme='dark'] .sevTile.high     { background: #2c1100; color: #fb923c; }
+[data-theme='dark'] .sevTile.low      { background: var(--bg-hover); color: var(--accent); }
 
 .sortActive {
   margin-left: 5px;

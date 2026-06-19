@@ -106,15 +106,17 @@ export function ScanReportPage() {
         <StatCard label="Vulnerable"        value={stats.vuln}  variant={stats.vuln  > 0 ? 'red'   : 'green'} />
         <StatCard label="Total CVEs"        value={stats.cves}  variant={stats.cves  > 0 ? 'amber' : 'green'} />
         <StatCard label="Clean"             value={stats.clean} variant="green" />
-        <StatCard label="Scanner" value={language.scanTool} />
+        <div className={styles.scannerCard}>
+          <StatCard label="Scanner" value={language.scanTool} />
+        </div>
         {stats.cves > 0 && (
           <div className={styles.sevBreakCard}>
-            <div className={styles.sevBreakLabel}>Severity</div>
-            <div className={styles.sevBreakGrid}>
+            <div className={styles.sevBreakTitle}>Vulnerabilities</div>
+            <div className={styles.sevTiles}>
               {(['CRITICAL', 'HIGH', 'MODERATE', 'LOW'] as const).map(s => (
-                <div key={s} className={styles.sevBreakRow}>
-                  <SeverityPill severity={s} />
-                  <span className={styles.sevBreakCount}>{stats.bySeverity[s]}</span>
+                <div key={s} className={`${styles.sevTile} ${styles[s.toLowerCase()]}`}>
+                  <span className={styles.sevTileNum}>{stats.bySeverity[s]}</span>
+                  <span className={styles.sevTileLabel}>{s}</span>
                 </div>
               ))}
             </div>
@@ -187,34 +189,47 @@ export function ScanReportPage() {
             <p>{scanned.length === 0 ? 'No scan data available yet for this language.' : 'Try a different search or filter.'}</p>
           </div>
         ) : (
-          <div className={styles.tableScroll}><table>
-            <colgroup>
-              <col className={styles.colIdx} />
-              <col className={styles.colPkg} />
-              <col className={styles.colVer} />
-              <col className={styles.colStatus} />
-              <col className={styles.colVulnId} />
-              <col className={styles.colCve} />
-              <col className={styles.colFix} />
-              <col className={styles.colDesc} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th className={`sortable${sortCol === 'pkg' ? ' sorted' : ''}`} onClick={() => handleSort('pkg')}>
-                  Package {arrow('pkg')}
-                </th>
-                <th>Version</th>
-                <th className={`sortable${sortCol === 'severity' ? ' sorted' : ''}`} onClick={() => handleSort('severity')}>
-                  Severity {arrow('severity')}
-                </th>
-                <th>Vuln ID</th>
-                <th>CVE Aliases</th>
-                <th>Fix Version</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            <div className={styles.tableHead}><table>
+              <colgroup>
+                <col className={styles.colIdx} />
+                <col className={styles.colPkg} />
+                <col className={styles.colVer} />
+                <col className={styles.colStatus} />
+                <col className={styles.colVulnId} />
+                <col className={styles.colCve} />
+                <col className={styles.colFix} />
+                <col className={styles.colDesc} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th className={`sortable${sortCol === 'pkg' ? ' sorted' : ''}`} onClick={() => handleSort('pkg')}>
+                    Package {arrow('pkg')}
+                  </th>
+                  <th>Version</th>
+                  <th className={`sortable${sortCol === 'severity' ? ' sorted' : ''}`} onClick={() => handleSort('severity')}>
+                    Severity {arrow('severity')}
+                  </th>
+                  <th>Vuln ID</th>
+                  <th>CVE Aliases</th>
+                  <th>Fix Version</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+            </table></div>
+            <div className={styles.tableScroll}><table>
+              <colgroup>
+                <col className={styles.colIdx} />
+                <col className={styles.colPkg} />
+                <col className={styles.colVer} />
+                <col className={styles.colStatus} />
+                <col className={styles.colVulnId} />
+                <col className={styles.colCve} />
+                <col className={styles.colFix} />
+                <col className={styles.colDesc} />
+              </colgroup>
+              <tbody>
               {flatRows.map(row => row.type === 'clean' ? (
                 <tr key={row.pkg.name}>
                   <td className={styles.idx}>{row.n}</td>
@@ -252,8 +267,9 @@ export function ScanReportPage() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table></div>
+              </tbody>
+            </table></div>
+          </>
         )}
       </div>
     </div>

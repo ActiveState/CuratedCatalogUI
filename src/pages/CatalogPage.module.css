@@ -46,13 +46,15 @@
 }
 .clearBtn:hover { color: var(--text-primary); }
 
-/* ── Table scroll wrapper ─────────────────────────────── */
-.tableScroll { overflow-x: auto; }
+/* ── Split thead / tbody containers ─────────────────── */
+.tableHead { padding-right: 6px; background: var(--bg-page); }
+.tableHead table { table-layout: fixed; width: 100%; }
+.tableScroll { overflow: auto; max-height: calc(100vh - 220px); border-radius: 0 0 9px 9px; scrollbar-gutter: stable; }
 .tableScroll table { table-layout: fixed; width: 100%; }
 .tableScroll td, .tableScroll th { overflow: hidden; }
 
 /* ── Column widths — fixed layout ─────────────────────── */
-.thIdx      { width: 40px; white-space: nowrap; }
+.thIdx      { width: 60px; white-space: nowrap; }
 .thPkg      { width: 22%; white-space: nowrap; }
 .thVersions { width: 14%; white-space: nowrap; }
 .thCve      { white-space: nowrap; }   /* fills remaining space */

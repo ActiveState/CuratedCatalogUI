@@ -85,21 +85,38 @@ export function CatalogPage() {
             <p>{packages.length === 0 ? 'No data available yet for this language.' : 'Try a different search term.'}</p>
           </div>
         ) : (
-          <div className={styles.tableScroll}><table>
-            <thead>
-              <tr>
-                <th className={styles.thIdx}>#</th>
-                <th className={`sortable${sortCol === 'name' ? ' sorted' : ''} ${styles.thPkg}`} onClick={() => handleSort('name')}>
-                  Package {arrow('name')}
-                </th>
-                <th className={styles.thVersions}>Versions</th>
-                <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''} ${styles.thCve}`} onClick={() => handleSort('cve')}>
-                  Vulnerabilities Summary {arrow('cve')}
-                </th>
-                {language.hasIndexUrl && <th className={styles.thIndex}>Index</th>}
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            <div className={styles.tableHead}><table>
+              <colgroup>
+                <col className={styles.thIdx} />
+                <col className={styles.thPkg} />
+                <col className={styles.thVersions} />
+                <col className={styles.thCve} />
+                {language.hasIndexUrl && <col className={styles.thIndex} />}
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className={styles.thIdx}>#</th>
+                  <th className={`sortable${sortCol === 'name' ? ' sorted' : ''} ${styles.thPkg}`} onClick={() => handleSort('name')}>
+                    Package {arrow('name')}
+                  </th>
+                  <th className={styles.thVersions}>Versions</th>
+                  <th className={`sortable${sortCol === 'cve' ? ' sorted' : ''} ${styles.thCve}`} onClick={() => handleSort('cve')}>
+                    Vulnerabilities Summary {arrow('cve')}
+                  </th>
+                  {language.hasIndexUrl && <th className={styles.thIndex}>Index</th>}
+                </tr>
+              </thead>
+            </table></div>
+            <div className={styles.tableScroll}><table>
+              <colgroup>
+                <col className={styles.thIdx} />
+                <col className={styles.thPkg} />
+                <col className={styles.thVersions} />
+                <col className={styles.thCve} />
+                {language.hasIndexUrl && <col className={styles.thIndex} />}
+              </colgroup>
+              <tbody>
               {filtered.map((pkg, i) => {
                 const scan = scanMap.get(pkg.name)
                 const vulnCount = scan?.vulns.length ?? null
@@ -139,8 +156,9 @@ export function CatalogPage() {
                   </tr>
                 )
               })}
-            </tbody>
-          </table></div>
+              </tbody>
+            </table></div>
+          </>
         )}
       </div>
     </div>

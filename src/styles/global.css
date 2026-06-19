@@ -1,5 +1,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Scrollbars ───────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
 body {
   font-family: 'Poppins', sans-serif;
   background: var(--bg-page);
@@ -51,7 +61,7 @@ tbody td { padding: 11px 16px; vertical-align: middle; }
 .page-wrap {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 32px 48px;
+  padding: 0 32px 24px;
 }
 
 .toolbar {
@@ -65,7 +75,7 @@ tbody td { padding: 11px 16px; vertical-align: middle; }
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   margin-top: 16px;
   overflow: hidden;
   box-shadow: var(--shadow-md);

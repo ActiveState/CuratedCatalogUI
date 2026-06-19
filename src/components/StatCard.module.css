@@ -15,6 +15,7 @@
   letter-spacing: 0.06em;
   color: var(--text-secondary);
   margin-bottom: 8px;
+  white-space: nowrap;
 }
 
 .value {
@@ -22,6 +23,9 @@
   font-weight: 600;
   line-height: 1;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .blue  .value { color: var(--accent); }
