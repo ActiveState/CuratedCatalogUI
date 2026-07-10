@@ -8,6 +8,8 @@ export interface Language {
 }
 
 const base = import.meta.env.BASE_URL
+// All languages must be listed here, even if disabled. The export feature
+// iterates this array to find which languages have data for the current POV.
 export const LANGUAGES: Language[] = [
   { id: 'python',     label: 'Python',     icon: `${base}icons/python.svg`,     hasIndexUrl: true,  scanTool: 'pip-audit · OSV'   },
   { id: 'javascript', label: 'JavaScript', icon: `${base}icons/javascript.svg`, hasIndexUrl: false, scanTool: 'osv-scanner · OSV' },
