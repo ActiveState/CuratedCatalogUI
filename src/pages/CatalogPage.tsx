@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useLanguageData } from '../hooks/useLanguageData'
 import { getLanguage } from '../languages'
 import { VersionPill } from '../components/VersionPill'
+import { ExportDropdown } from '../components/ExportDropdown'
 import styles from './CatalogPage.module.css'
 
 type SortCol = 'name' | 'cve'
@@ -72,6 +73,13 @@ export function CatalogPage() {
             <button className={styles.clearBtn} onClick={() => setQuery('')} aria-label="Clear search">×</button>
           )}
         </div>
+        <ExportDropdown
+          currentLang={lang}
+          packages={packages}
+          scanned={scanned}
+          generated={generated}
+          indexUrl={indexUrl}
+        />
         <p className="count-label">
           Showing <b>{filtered.length.toLocaleString()}</b> of <b>{packages.length.toLocaleString()}</b> packages
         </p>

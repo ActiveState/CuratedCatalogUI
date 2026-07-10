@@ -16,6 +16,35 @@ const EMPTY: LanguageData = { packages: [], scanned: [], generated: '', indexUrl
 // Module-level cache keyed by "customerId/lang"
 const cache = new Map<string, LanguageData>()
 
+export async function fetchLanguageData(base: string, customerId: string, lang: string): Promise<LanguageData> {
+  const cacheKey = `${customerId}/${lang}`
+  if (cache.has(cacheKey)) return cache.get(cacheKey)!
+  const [catalog, audit] = await Promise.all([
+    fetch(`${base}data/${customerId}/${lang}/catalog.json`).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() }),
+    fetch(`${base}data/${customerId}/${lang}/audit.json`).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() }),
+  ])
+  const packages: Package[] = catalog.packages ?? catalog
+  const generated: string = catalog.generated ?? ''
+  const indexUrl: string = catalog.index_url ?? ''
+  const rawDeps: any[] = Array.isArray(audit) ? audit : (audit.dependencies ?? [])
+  const scanned: ScannedPackage[] = rawDeps
+    .filter((dep: any) => !dep.skip_reason)
+    .map((dep: any) => ({
+      name: dep.name,
+      version: dep.version ?? '',
+      vulns: (dep.vulns ?? []).map((v: any) => ({
+        id: v.id ?? '',
+        cves: (v.aliases ?? v.cves ?? []).filter((a: string) => a.startsWith('CVE-')),
+        fix: v.fix_versions ?? v.fix ?? [],
+        description: v.description ?? '',
+        severity: v.severity ?? null,
+      })),
+    }))
+  const result: LanguageData = { packages, scanned, generated, indexUrl, loading: false, error: null }
+  cache.set(cacheKey, result)
+  return result
+}
+
 export function useLanguageData(lang: string): LanguageData {
   const { customerId } = useCustomer()
   const cacheKey = `${customerId}/${lang}`
